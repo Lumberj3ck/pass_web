@@ -1,0 +1,60 @@
+{{ define "title" }} 
+Auth
+{{ end }}
+
+{{ define "content" }}
+
+<div>
+    Please, note your private key stays in the current browser tab and never goes anywhere
+</div>
+<div id="result"></div>
+ <form id="signed-form" hx-target="#result">
+    <div style="display: flex;">
+    <textarea id="auth-private-key" rows="4" cols="50"></textarea>
+    <input type="hidden" name="signature" id="signature">
+    </div>
+    <input type="hidden" name="challenge" id="challenge" value="{{ .Challenge }}" >
+    <input type="hidden" name="challengeId" id="challengeId" value="{{ .ChallengeID }}" >
+    <button type="submit">Sign with private key</button>
+</form>
+
+<script>
+document.getElementById("signed-form").addEventListener("submit", async function (e) {
+    e.preventDefault(); 
+    console.log("Prevented default and fire own")
+
+    const messageText = document.getElementById("challenge").value;
+    const privateKeyText = document.getElementById("auth-private-key").value;
+    const passphrase = "test"; 
+
+    try {
+        const privateKey = await openpgp.readPrivateKey({ armoredKey: privateKeyText });
+        const decryptedKey = await openpgp.decryptKey({
+            privateKey,
+            passphrase
+        });
+
+        const signedMessage = await openpgp.sign({
+            message: await openpgp.createCleartextMessage({ text: messageText }), 
+            signingKeys: decryptedKey
+        });
+        document.getElementById("signature").value = signedMessage;
+
+        const form = document.getElementById("signed-form");
+        const formData = new FormData(form);
+
+        htmx.ajax('POST', form.getAttribute("hx-post"), {
+            target: form.getAttribute("hx-target"),
+            swap: form.getAttribute("hx-swap"),
+            values: Object.fromEntries(formData)
+        });
+
+    } catch (err) {
+        console.error("Signing failed:", err);
+        alert("Failed to sign the message. Please check your private key or passphrase.");
+    }
+});
+</script>
+{{ end }}
+
+

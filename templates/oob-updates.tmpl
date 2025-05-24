@@ -1,0 +1,17 @@
+{{ block "oob-auth-success" .}}
+<div id="result" hx-swap-oob="true">
+Authentication is sucessfull
+</div>
+{{end}}
+
+{{ block "oob-auth-id-fail" .}}
+<div id="result" hx-swap-oob="true">
+Failed to find challenge id
+</div>
+{{end}}
+
+{{ block "oob-auth-signature-fail" .}}
+<div id="result" hx-swap-oob="true">
+Provided signature is not valid 
+</div>
+{{end}}
