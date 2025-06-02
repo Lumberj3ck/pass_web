@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -9,9 +10,13 @@ import (
 	"os"
 	templ "pass_web/internal/api/template"
 	"path/filepath"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/ProtonMail/gopenpgp/v3/crypto"
 	"github.com/google/uuid"
+    "github.com/joho/godotenv"
 )
 
 const challengeAmountOfChars = 20
@@ -25,8 +30,92 @@ type UserChalenges struct{
     chalenges map[string]string   
 }
 
+type JWTClaims struct {	
+    jwt.RegisteredClaims
+}
+var jwtSecret []byte
+
+func init(){
+    var err = godotenv.Load()
+    if err != nil {
+        log.Fatal("Error loading .env file")
+    }
+
+    secretString := os.Getenv("jwt_secret")
+	if secretString == "" {
+		log.Fatal("jwt_secret environment variable not set")
+	}
+	jwtSecret = []byte(secretString)
+
+}
+
+func DecodeJWT(tokenString string) (*JWTClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse or validate token: %w", err)
+	}
+
+	if !token.Valid {
+		return nil, fmt.Errorf("token is invalid")
+	}
+
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok {
+		return nil, fmt.Errorf("invalid token claims type")
+	}
+
+	return claims, nil
+}
+
+
+func GenerateJWT() (string, error) {
+	claims := JWTClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),                   
+			NotBefore: jwt.NewNumericDate(time.Now()),                    
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenString, err := token.SignedString(jwtSecret)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign token: %w", err)
+	}
+
+	return tokenString, nil
+}
+
 var uc = UserChalenges{
     chalenges: make(map[string]string),
+}
+
+func AuthMiddlerware(next http.HandlerFunc) http.HandlerFunc{
+    return func (w http.ResponseWriter, r *http.Request) {
+        auth_cookie, err := r.Cookie("auth-token")
+
+        if err != nil{
+            w.WriteHeader(http.StatusNetworkAuthenticationRequired)
+            w.Write([]byte("Please provide auth cookie"))
+            return 
+        }
+
+        _, err = DecodeJWT(auth_cookie.Value)
+        if err != nil{
+            w.WriteHeader(http.StatusNetworkAuthenticationRequired)
+            w.Write([]byte("Provided cookie is invalid"))
+            return 
+        }
+
+        next(w, r)
+    }
 }
 
 func generateChallenge(m int) string{
@@ -86,6 +175,7 @@ func Handler(t *templ.Template) http.HandlerFunc{
             if sigErr := verifyResult.SignatureError(); sigErr != nil {
                 log.Println("Check sign sig err")
                 t.Render(w, "oob-auth-signature-fail", struct{}{})
+                
                 return
             }
 
@@ -96,6 +186,22 @@ func Handler(t *templ.Template) http.HandlerFunc{
 
             decrypted := string(verifyResult.Cleartext())
             if decrypted == original{
+
+                jwt_auth_token, err := GenerateJWT()
+                if err != nil{
+                    panic(err)
+                }
+
+                cookie := http.Cookie{
+                    Name: "auth-token",
+                    Value: jwt_auth_token,
+                    HttpOnly: true,
+                    Path: "/",
+                    Expires: time.Now().Add(time.Hour*24*7),
+                    SameSite: http.SameSiteLaxMode,                       
+                }
+                http.SetCookie(w, &cookie)
+
                 t.Render(w, "oob-auth-success", struct{}{})
                 return
             }

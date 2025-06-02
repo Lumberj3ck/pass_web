@@ -22,7 +22,7 @@ func NewMutexHandler() *http.ServeMux{
     }
 
     mu.Handle("/", http.FileServer(http.Dir(filepath.Join(wd, "static"))))
-    mu.HandleFunc("/show", show.Handler(&templ))
+    mu.HandleFunc("/show", auth.AuthMiddlerware(show.Handler(&templ)))
     mu.HandleFunc("/auth", auth.Handler(&templ))
 
     log.Println("Started listening")
