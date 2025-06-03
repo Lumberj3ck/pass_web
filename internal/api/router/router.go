@@ -10,21 +10,20 @@ import (
 	"path/filepath"
 )
 
+func NewMutexHandler() *http.ServeMux {
+	templ := templ.NewTemplate()
+	log.Println("Created a new template")
+	mu := http.NewServeMux()
 
-func NewMutexHandler() *http.ServeMux{
-    templ := templ.NewTemplate()
-    log.Println("Created a new template")
-    mu := http.NewServeMux()
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
 
-    wd, err := os.Getwd()
-    if err != nil{
-        panic(err)
-    }
+	mu.Handle("/", http.FileServer(http.Dir(filepath.Join(wd, "static"))))
+	mu.HandleFunc("/show", auth.AuthMiddlerware(show.Handler(&templ)))
+	mu.HandleFunc("/auth", auth.Handler(&templ))
 
-    mu.Handle("/", http.FileServer(http.Dir(filepath.Join(wd, "static"))))
-    mu.HandleFunc("/show", auth.AuthMiddlerware(show.Handler(&templ)))
-    mu.HandleFunc("/auth", auth.Handler(&templ))
-
-    log.Println("Started listening")
-    return mu
+	log.Println("Started listening")
+	return mu
 }

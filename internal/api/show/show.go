@@ -11,31 +11,30 @@ import (
 	"strings"
 )
 
-type Page struct{
-    Passwords []string
+type Page struct {
+	Passwords []string
 }
 
 func Handler(t *templ.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, e *http.Request) {
-    
-        dir := templ.GetTemplateDir()
-        t, err := template.ParseFiles(filepath.Join(dir, "base.tmpl"), filepath.Join(dir,"show.tmpl"))
 
-        if err != nil{
-            panic(err)
-        }
+		dir := templ.GetTemplateDir()
+		t, err := template.ParseFiles(filepath.Join(dir, "base.tmpl"), filepath.Join(dir, "show.tmpl"))
 
-        cmd := exec.Command("pass")
-        output, err := cmd.Output()
+		if err != nil {
+			panic(err)
+		}
 
-        if err != nil {
-            log.Println("cmd.Run() failed with %s\n", err)
-        }
-        var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*m`)
-        output_str := ansiRegex.ReplaceAllString(string(output), "")
-        
-        
-        lines := strings.Split(string(output_str), "\n")
-        t.Execute(w, Page{lines})
+		cmd := exec.Command("pass")
+		output, err := cmd.Output()
+
+		if err != nil {
+			log.Println("cmd.Run() failed with %s\n", err)
+		}
+		var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+		output_str := ansiRegex.ReplaceAllString(string(output), "")
+
+		lines := strings.Split(string(output_str), "\n")
+		t.Execute(w, Page{lines})
 	}
 }
