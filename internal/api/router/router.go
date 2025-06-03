@@ -12,7 +12,7 @@ import (
 
 func NewMutexHandler() *http.ServeMux {
 	templ := templ.NewTemplate()
-	log.Println("Created a new template")
+	log.Println("Created a new template handler")
 	mu := http.NewServeMux()
 
 	wd, err := os.Getwd()

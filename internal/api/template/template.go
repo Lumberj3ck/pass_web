@@ -25,7 +25,6 @@ func GetTemplateDir() string {
 		os.Exit(1)
 	}
 
-	fmt.Println(dir)
 	return filepath.Join(dir, "templates")
 }
 

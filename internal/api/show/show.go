@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	templ "pass_web/internal/api/template"
 	"path/filepath"
-	"regexp"
 	"strings"
 )
 
@@ -17,7 +16,6 @@ type Page struct {
 
 func Handler(t *templ.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, e *http.Request) {
-
 		dir := templ.GetTemplateDir()
 		t, err := template.ParseFiles(filepath.Join(dir, "base.tmpl"), filepath.Join(dir, "show.tmpl"))
 
@@ -25,16 +23,15 @@ func Handler(t *templ.Template) http.HandlerFunc {
 			panic(err)
 		}
 
-		cmd := exec.Command("pass")
+		cmd := exec.Command("ls /root/.password-store")
 		output, err := cmd.Output()
 
 		if err != nil {
-			log.Println("cmd.Run() failed with %s\n", err)
+			log.Printf("cmd.Run() failed with %s\n", err)
 		}
-		var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*m`)
-		output_str := ansiRegex.ReplaceAllString(string(output), "")
 
-		lines := strings.Split(string(output_str), "\n")
+
+		lines := strings.Split(string(output), "\n")
 		t.Execute(w, Page{lines})
 	}
 }
