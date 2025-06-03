@@ -20,6 +20,7 @@ import (
 )
 
 const challengeAmountOfChars = 20
+const tokenExpirationDuration = time.Hour * 24
 
 type Page struct{
     Challenge string
@@ -33,6 +34,7 @@ type UserChalenges struct{
 type JWTClaims struct {	
     jwt.RegisteredClaims
 }
+
 var jwtSecret []byte
 
 func init(){
@@ -77,7 +79,7 @@ func DecodeJWT(tokenString string) (*JWTClaims, error) {
 func GenerateJWT() (string, error) {
 	claims := JWTClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(tokenExpirationDuration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),                   
 			NotBefore: jwt.NewNumericDate(time.Now()),                    
 		},
@@ -100,6 +102,7 @@ var uc = UserChalenges{
 func AuthMiddlerware(next http.HandlerFunc) http.HandlerFunc{
     return func (w http.ResponseWriter, r *http.Request) {
         auth_cookie, err := r.Cookie("auth-token")
+        t := templ.NewTemplate()
 
         if err != nil{
             w.WriteHeader(http.StatusNetworkAuthenticationRequired)
@@ -109,8 +112,9 @@ func AuthMiddlerware(next http.HandlerFunc) http.HandlerFunc{
 
         _, err = DecodeJWT(auth_cookie.Value)
         if err != nil{
+            log.Println(err)
             w.WriteHeader(http.StatusNetworkAuthenticationRequired)
-            w.Write([]byte("Provided cookie is invalid"))
+            t.Render(w, "auth_provided_cookie_invalid", struct{}{})
             return 
         }
 
@@ -197,7 +201,7 @@ func Handler(t *templ.Template) http.HandlerFunc{
                     Value: jwt_auth_token,
                     HttpOnly: true,
                     Path: "/",
-                    Expires: time.Now().Add(time.Hour*24*7),
+                    Expires: time.Now().Add(tokenExpirationDuration),
                     SameSite: http.SameSiteLaxMode,                       
                 }
                 http.SetCookie(w, &cookie)

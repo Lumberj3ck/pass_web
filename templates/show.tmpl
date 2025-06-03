@@ -3,6 +3,10 @@ Show
 {{ end }}
 
 {{ define "content" }}
-    {{.Password}}
+    {{ range .Passwords}}
+    <div>
+        {{ . }}
+    </div>
+    {{ end }}
 {{ end }}
 

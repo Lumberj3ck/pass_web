@@ -2,13 +2,17 @@ package show
 
 import (
 	"html/template"
+	"log"
 	"net/http"
+	"os/exec"
 	templ "pass_web/internal/api/template"
 	"path/filepath"
+	"regexp"
+	"strings"
 )
 
 type Page struct{
-    Password string
+    Passwords []string
 }
 
 func Handler(t *templ.Template) http.HandlerFunc {
@@ -21,8 +25,17 @@ func Handler(t *templ.Template) http.HandlerFunc {
             panic(err)
         }
 
-        t.Execute(w, Page{"Passowrd"})
+        cmd := exec.Command("pass")
+        output, err := cmd.Output()
 
-
+        if err != nil {
+            log.Println("cmd.Run() failed with %s\n", err)
+        }
+        var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+        output_str := ansiRegex.ReplaceAllString(string(output), "")
+        
+        
+        lines := strings.Split(string(output_str), "\n")
+        t.Execute(w, Page{lines})
 	}
 }
