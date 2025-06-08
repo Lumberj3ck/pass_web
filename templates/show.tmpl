@@ -3,10 +3,29 @@ Show
 {{ end }}
 
 {{ define "content" }}
-    {{ range .Passwords}}
-    <div>
-        {{ . }}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Password Store</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {{ range .Passwords }}
+        <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
+             hx-get="/password/{{ .Id }}"
+             hx-target="#password-content"
+             hx-swap="innerHTML"
+             hx-trigger="click"
+             hx-push-url="true">
+            <div class="flex items-center justify-between">
+                <span class="text-lg font-semibold">{{ .Password }}</span>
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </div>
+        </div>
+        {{ end }}
     </div>
-    {{ end }}
+    
+    <div id="password-content" class="mt-8">
+        <!-- Password content will be loaded here -->
+    </div>
+</div>
 {{ end }}
 

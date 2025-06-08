@@ -121,7 +121,7 @@ func AuthMiddlerware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func generateChallenge(m int) string {
+func GenerateChallenge(m int) string {
 	var resp string
 	asciiLetters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	for i := 0; i < m; i++ {
@@ -208,7 +208,7 @@ func Handler(t *templ.Template) http.HandlerFunc {
 		id := uuid.New()
 		randomId := id.String()
 
-		randomChallenge := generateChallenge(challengeAmountOfChars)
+		randomChallenge := GenerateChallenge(challengeAmountOfChars)
 		uc.chalenges[randomId] = randomChallenge
 		t, err := template.ParseFiles(filepath.Join(dir, "base.tmpl"), filepath.Join(dir, "auth.tmpl"))
 		if err != nil {
