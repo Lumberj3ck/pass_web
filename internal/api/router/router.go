@@ -6,7 +6,8 @@ import (
 	"pass_web/internal/api/show"
 	templ "pass_web/internal/api/template"
 
-	password "pass_web/internal/api/password"
+	show_password "pass_web/internal/api/password/show_password"
+	delete_password "pass_web/internal/api/password/delete_password"
 
 	"github.com/gorilla/mux"
 )
@@ -19,7 +20,9 @@ func NewMutexHandler() *mux.Router {
 
 	mu.HandleFunc("/show", auth.AuthMiddlerware(show.Handler(&templ)))
 	mu.HandleFunc("/auth", auth.Handler(&templ))
-	mu.HandleFunc("/password/{id}", auth.AuthMiddlerware(password.Handler(&templ)))
+
+	mu.HandleFunc("/password/{id}", auth.AuthMiddlerware(show_password.Handler(&templ))).Methods("POST")
+	mu.HandleFunc("/password/{id}", auth.AuthMiddlerware(delete_password.Handler(&templ))).Methods("DELETE")
 
 	log.Println("Started listening")
 	return mu

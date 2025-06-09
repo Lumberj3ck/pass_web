@@ -1,4 +1,4 @@
-package password
+package show_password
 
 import (
 	"encoding/base64"
