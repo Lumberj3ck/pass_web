@@ -197,9 +197,10 @@ func Handler(t *templ.Template) http.HandlerFunc {
 					Expires:  time.Now().Add(tokenExpirationDuration),
 					SameSite: http.SameSiteLaxMode,
 				}
-				http.SetCookie(w, &cookie)
 
-				t.Render(w, "oob-auth-success", struct{}{})
+				http.SetCookie(w, &cookie)
+				w.Header().Set("HX-Redirect", "/show")
+				w.WriteHeader(http.StatusOK)
 				return
 			}
 		}

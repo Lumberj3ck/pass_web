@@ -32,13 +32,13 @@ func Handler(t *templ.Template) http.HandlerFunc {
 		encodedContent := base64.StdEncoding.EncodeToString(output)
 
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`
-			<div class="bg-white rounded-lg shadow-md p-6">
-				<h2 class="text-xl font-semibold mb-4">` + id + `</h2>
-				<div class="bg-gray-100 p-4 rounded">
-					<pre class="whitespace-pre-wrap break-all">` + encodedContent + `</pre>
-				</div>
-			</div>
-		`))
+
+		t.Render(w, "password", struct {
+			PasswordFile           string
+			EncodedContent string
+		}{
+			PasswordFile :           passwordFile,
+			EncodedContent: encodedContent,
+		})
 	}
 }
