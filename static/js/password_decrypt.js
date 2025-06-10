@@ -52,9 +52,9 @@ async function handlePasswordDecrypt() {
     }
 }
 
-document.addEventListener('htmx:afterSwap', function(evt) {
-    if (evt.detail.target.id === 'password-content') {
-        const passwordMenu = document.getElementById('passwordMenu');
-        passwordMenu.style.display = 'block';
-    }
-}); 
+// document.addEventListener('htmx:afterSwap', function(evt) {
+//     if (evt.detail.target.id === 'password-content') {
+//         const passwordMenu = document.getElementById('passwordMenu');
+//         passwordMenu.style.display = 'block';
+//     }
+// }); 

@@ -24,8 +24,8 @@ func Handler(t *templ.Template) http.HandlerFunc {
 		cmd := exec.Command("cat", passwordPath)
 		output, err := cmd.Output()
 		if err != nil {
-			log.Printf("Failed to list passwords: %v", err)
-			http.Error(w, "Failed to list passwords", http.StatusInternalServerError)
+			log.Printf("Failed to show password: %v", err)
+			http.Error(w, "Failed to show password", http.StatusInternalServerError)
 			return
 		}
 

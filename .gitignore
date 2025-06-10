@@ -3,3 +3,5 @@ pubKeyTest.gpg
 gnupg
 password-store
 privKeyTest.gpg
+
+todo.md
