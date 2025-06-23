@@ -26,3 +26,9 @@ Failed to find challenge id
 Provided signature is not valid 
 </div>
 {{end}}
+
+{{ block "password-insert-success" .}}
+<div id="insertion-result" hx-swap-oob="true">
+<span class="text-green-600">Password inserted successfully!</span>
+</div>
+{{end}}
