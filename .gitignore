@@ -5,3 +5,4 @@ password-store
 privKeyTest.gpg
 
 todo.md
+.env
