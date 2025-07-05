@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -16,10 +17,11 @@ import (
 func Handler(t *templ.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["id"]
-
+		
 		passwordItem := show.PasswordsID[id]
 		passwordFile := passwordItem.Password
-		passwordPath := filepath.Join("/root/.password-store", passwordFile)
+		prefix := os.Getenv("PREFIX")
+		passwordPath := filepath.Join(prefix, passwordFile)
 
 		cmd := exec.Command("cat", passwordPath)
 		output, err := cmd.Output()

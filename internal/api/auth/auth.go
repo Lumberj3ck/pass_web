@@ -145,7 +145,11 @@ func Handler(t *templ.Template) http.HandlerFunc {
 
 			pgp := crypto.PGP()
 
-			file, err := os.Open("pubKeyTest.gpg")
+			pub_key_path := os.Getenv("PASSWEB_PUB_KEY_PATH")
+			if len(pub_key_path) == 0{
+				pub_key_path = "pubKeyTest.gpg"
+			} 
+			file, err := os.Open(pub_key_path)
 			defer file.Close()
 			if err != nil {
 				panic(err)
@@ -157,6 +161,7 @@ func Handler(t *templ.Template) http.HandlerFunc {
 			}
 			pubkeyArmored := string(buffer)
 
+			log.Println(sign)
 			publicKey, err := crypto.NewKeyFromArmored(pubkeyArmored)
 
 			if err != nil {
@@ -174,6 +179,7 @@ func Handler(t *templ.Template) http.HandlerFunc {
 
 			if sigErr := verifyResult.SignatureError(); sigErr != nil {
 				log.Println("Check sign sig err")
+				log.Println(sigErr)
 				t.Render(w, "oob-auth-signature-fail", struct{}{})
 
 				return
