@@ -137,7 +137,6 @@ func Handler(t *templ.Template) http.HandlerFunc {
 		challengeId := r.FormValue("challengeId")
 		if sign != "" && challengeId != "" {
 			original, ok := uc.chalenges[challengeId]
-			// log.Println(uc.chalenges)
 			if !ok {
 				t.Render(w, "oob-auth-id-fail", struct{}{})
 				return
@@ -149,6 +148,7 @@ func Handler(t *templ.Template) http.HandlerFunc {
 			if len(pub_key_path) == 0{
 				pub_key_path = "pubKeyTest.gpg"
 			} 
+			log.Println(pub_key_path)
 			file, err := os.Open(pub_key_path)
 			defer file.Close()
 			if err != nil {
@@ -161,7 +161,6 @@ func Handler(t *templ.Template) http.HandlerFunc {
 			}
 			pubkeyArmored := string(buffer)
 
-			log.Println(sign)
 			publicKey, err := crypto.NewKeyFromArmored(pubkeyArmored)
 
 			if err != nil {
@@ -179,7 +178,7 @@ func Handler(t *templ.Template) http.HandlerFunc {
 
 			if sigErr := verifyResult.SignatureError(); sigErr != nil {
 				log.Println("Check sign sig err")
-				log.Println(sigErr)
+				log.Println(sigErr.Error())
 				t.Render(w, "oob-auth-signature-fail", struct{}{})
 
 				return

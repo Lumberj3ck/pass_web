@@ -25,6 +25,7 @@ async function decryptPassword(encryptedContent, privateKeyArmored, passphrase) 
     }
 }
 
+window.passphrase = "";
 async function handlePasswordDecrypt() {
     const passwordContent = document.getElementById('password-content');
     const encryptedContent = passwordContent.querySelector('pre').textContent;
@@ -37,15 +38,19 @@ async function handlePasswordDecrypt() {
     }
 
     const privateKey = document.getElementById('privateKey').value;
-    const passphrase = prompt('Please enter your passphrase:');
 
-    console.log(privateKey);
-    if (!passphrase) {
+    if (window.passphrase.length == 0){
+        let p = prompt('Please enter your passphrase:');
+        window.passphrase = p
+        setTimeout(() => {window.passphrase = ""}, 1000 * 60 * 15);
+    }
+
+    if (!window.passphrase) {
         return;
     }
 
     try {
-        const decryptedContent = await decryptPassword(uint8Array, privateKey, passphrase);
+        const decryptedContent = await decryptPassword(uint8Array, privateKey, window.passphrase);
         passwordContent.querySelector('pre').textContent = decryptedContent;
     } catch (error) {
         alert('Failed to decrypt password: ' + error.message);

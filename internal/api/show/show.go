@@ -13,21 +13,21 @@ import (
 	"strings"
 )
 
-
-type PasswordItem struct{
-	Id string
+type PasswordItem struct {
+	Id       string
 	Password string
-	IsDir bool
+	IsDir    bool
+	Path string
 }
 
 var PasswordsID map[string]PasswordItem
 
 type Page struct {
-	Is_root bool
+	Is_root   bool
 	Passwords []PasswordItem
 }
 
-func init(){
+func init() {
 	PasswordsID = make(map[string]PasswordItem)
 }
 
@@ -42,17 +42,16 @@ func Handler(t *templ.Template) http.HandlerFunc {
 
 		prefix := os.Getenv("PREFIX")
 		uri_params := e.URL.Query()
-		
-		
+
 		subpath := uri_params["path"]
-		
+
 		password_path := prefix
 		is_root := true
-		if len(subpath) > 0{
-			password_path = filepath.Join(prefix, subpath[0])	
+		if len(subpath) > 0 {
+			password_path = filepath.Join(prefix, subpath[0])
 			is_root = false
 		}
-		log.Println(password_path)	
+		log.Println(password_path)
 		cmd := exec.Command("ls", password_path)
 		output, err := cmd.Output()
 
@@ -60,23 +59,22 @@ func Handler(t *templ.Template) http.HandlerFunc {
 			log.Printf("cmd.Output() failed with %s\n", err)
 		}
 
-
 		lines := strings.Split(string(output), "\n")
-		lines = lines[:len(lines) - 1]
+		lines = lines[:len(lines)-1]
 		p := Page{}
 		p.Is_root = is_root
-		for i := 0; i < len(lines); i++{
+		for i := 0; i < len(lines); i++ {
 			file_p := filepath.Join(password_path, lines[i])
 			fileInf, err := os.Stat(file_p)
 
-			if err != nil{
-				log.Println(fmt.Sprintf("Couldn't find a file %s", file_p) )
+			if err != nil {
+				log.Println(fmt.Sprintf("Couldn't find a file %s", file_p))
 				continue
 			}
 
 			passwordID := auth.GenerateChallenge(20)
-			p.Passwords = append(p.Passwords, PasswordItem{passwordID, lines[i], fileInf.IsDir()})
-			PasswordsID[passwordID] = PasswordItem{passwordID, lines[i], fileInf.IsDir()}
+			p.Passwords = append(p.Passwords, PasswordItem{passwordID, lines[i], fileInf.IsDir(), password_path})
+			PasswordsID[passwordID] = PasswordItem{passwordID, lines[i], fileInf.IsDir(), password_path}
 		}
 		t.Execute(w, p)
 	}

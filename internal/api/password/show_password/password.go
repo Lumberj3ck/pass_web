@@ -4,12 +4,15 @@ import (
 	"encoding/base64"
 	"log"
 	"net/http"
-	"os"
-	"os/exec"
 	"path/filepath"
 
-	"github.com/gorilla/mux"
+	// "os"
+	"os/exec"
+	// "path/filepath"
+
 	show "pass_web/internal/api/show"
+
+	"github.com/gorilla/mux"
 
 	templ "pass_web/internal/api/template"
 )
@@ -20,9 +23,13 @@ func Handler(t *templ.Template) http.HandlerFunc {
 		
 		passwordItem := show.PasswordsID[id]
 		passwordFile := passwordItem.Password
-		prefix := os.Getenv("PREFIX")
-		passwordPath := filepath.Join(prefix, passwordFile)
+		// prefix := os.Getenv("PREFIX")
+		// passwordPath := filepath.Join(prefix, passwordFile)
+		//
+		passwordPath := passwordItem.Path
+		passwordPath = filepath.Join(passwordPath, passwordItem.Password)
 
+		log.Println("Path password ", passwordPath)
 		cmd := exec.Command("cat", passwordPath)
 		output, err := cmd.Output()
 		if err != nil {

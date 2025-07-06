@@ -6,3 +6,4 @@ privKeyTest.gpg
 
 todo.md
 .env
+t_gpg.go

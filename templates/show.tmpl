@@ -4,23 +4,31 @@ Show
 
 {{ define "content" }}
 <div class="container mx-auto px-4 py-8">
+
+    {{if .Is_root}}
     <h1 class="text-3xl font-bold mb-6">Password Store</h1>
+    {{end}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {{ range .Passwords }}
         <div class="password-item bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
-
-             {{ if .isDir }}
-                 hx-post="/show?path={{ .Path }}"
+             {{if .IsDir}}
+             hx-post="/show?path={{ .Password }}"
+             hx-target=".{{.Id}}"
              {{else}}
              hx-post="/password/{{ .Id }}"
              hx-target="#password-content"
-             {{ end }}
+             {{end}}
 
              hx-swap="innerHTML"
              hx-trigger="click"
              >
-            <div class="flex items-center justify-between">
+         {{if .IsDir}}
+        <span class="text-lg font-semibold">{{ .Password }}</span>
+         {{end}}
+            <div class="{{.Id}} flex items-center justify-between">
+                 {{if not .IsDir}}
                 <span class="text-lg font-semibold">{{ .Password }}</span>
+                 {{end}}
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
