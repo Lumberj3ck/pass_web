@@ -2,14 +2,12 @@ package auth
 
 import (
 	"fmt"
-	"html/template"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	templ "pass_web/internal/api/template"
-	"path/filepath"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -131,8 +129,8 @@ func GenerateChallenge(m int) string {
 	return resp
 }
 
-func Handler(t *templ.Template) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Handler(w http.ResponseWriter, r *http.Request) {
+		t := templ.NewTemplate()
 		sign := r.FormValue("signature")
 		challengeId := r.FormValue("challengeId")
 		if sign != "" && challengeId != "" {
@@ -209,18 +207,17 @@ func Handler(t *templ.Template) http.HandlerFunc {
 				return
 			}
 		}
-		dir := templ.GetTemplateDir()
 
 		id := uuid.New()
 		randomId := id.String()
 
 		randomChallenge := GenerateChallenge(challengeAmountOfChars)
 		uc.chalenges[randomId] = randomChallenge
-		t, err := template.ParseFiles(filepath.Join(dir, "base.tmpl"), filepath.Join(dir, "auth.tmpl"))
-		if err != nil {
-			panic(err)
-		}
+		// t, err := template.ParseFiles(filepath.Join(dir, "base.tmpl"), filepath.Join(dir, "auth.tmpl"))
+		t = templ.NewTemplate("templates/base.tmpl", "templates/auth.tmpl")
+		// if err != nil {
+		// 	panic(err)
+		// }
 
-		t.Execute(w, Page{randomChallenge, randomId})
-	}
+		t.Render(w, "", Page{randomChallenge, randomId})
 }

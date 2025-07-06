@@ -17,8 +17,8 @@ import (
 	templ "pass_web/internal/api/template"
 )
 
-func Handler(t *templ.Template) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Handler(w http.ResponseWriter, r *http.Request) {
+		t := templ.NewTemplate()
 		id := mux.Vars(r)["id"]
 		
 		passwordItem := show.PasswordsID[id]
@@ -50,4 +50,3 @@ func Handler(t *templ.Template) http.HandlerFunc {
 			EncodedContent: encodedContent,
 		})
 	}
-}

@@ -2,7 +2,6 @@ package show
 
 import (
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -27,18 +26,20 @@ type Page struct {
 	Passwords []PasswordItem
 }
 
+
 func init() {
 	PasswordsID = make(map[string]PasswordItem)
 }
 
-func Handler(t *templ.Template) http.HandlerFunc {
-	return func(w http.ResponseWriter, e *http.Request) {
-		dir := templ.GetTemplateDir()
-		t, err := template.ParseFiles(filepath.Join(dir, "base.tmpl"), filepath.Join(dir, "show.tmpl"))
+func Handler(w http.ResponseWriter, e *http.Request) {
+		// dir := templ.GetTemplateDir()
+		// t, err := template.ParseFiles(filepath.Join(dir, "base.tmpl"), filepath.Join(dir, "show.tmpl"))
+		// t, err := template.ParseFS(TemplatesFS, "templates/base.tmpl",  "templates/show.tmpl")
+		t := templ.NewTemplate("templates/base.tmpl",  "templates/show.tmpl")
 
-		if err != nil {
-			panic(err)
-		}
+		// if err != nil {
+		// 	panic(err)
+		// }
 
 		prefix := os.Getenv("PREFIX")
 		uri_params := e.URL.Query()
@@ -76,6 +77,5 @@ func Handler(t *templ.Template) http.HandlerFunc {
 			p.Passwords = append(p.Passwords, PasswordItem{passwordID, lines[i], fileInf.IsDir(), password_path})
 			PasswordsID[passwordID] = PasswordItem{passwordID, lines[i], fileInf.IsDir(), password_path}
 		}
-		t.Execute(w, p)
+		t.Render(w, "", p)
 	}
-}

@@ -4,12 +4,19 @@ import (
 	"net/http"
 	"os"
 	"log"
+	"embed"
 	"path/filepath"
 
 	router "pass_web/internal/api/router"
+	templ "pass_web/internal/api/template"
+
 )
 
+//go:embed templates/*
+var TemplateFS embed.FS
+
 func main() {
+	templ.TemplateFS = TemplateFS
 	wd := os.Getenv("PASS_WEB_ROOT")
 	if wd == "" {
 		wd = "."
