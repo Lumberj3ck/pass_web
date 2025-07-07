@@ -2,13 +2,12 @@ package show_password
 
 import (
 	"encoding/base64"
+	"io"
 	"log"
 	"net/http"
 	"path/filepath"
 
-	// "os"
-	"os/exec"
-	// "path/filepath"
+	"os"
 
 	show "pass_web/internal/api/show"
 
@@ -23,22 +22,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		
 		passwordItem := show.PasswordsID[id]
 		passwordFile := passwordItem.Password
-		// prefix := os.Getenv("PREFIX")
-		// passwordPath := filepath.Join(prefix, passwordFile)
-		//
+
 		passwordPath := passwordItem.Path
 		passwordPath = filepath.Join(passwordPath, passwordItem.Password)
 
 		log.Println("Path password ", passwordPath)
-		cmd := exec.Command("cat", passwordPath)
-		output, err := cmd.Output()
-		if err != nil {
-			log.Printf("Failed to show password: %v", err)
-			http.Error(w, "Failed to show password", http.StatusInternalServerError)
-			return
-		}
+		file, err := os.Open(passwordPath)
 
-		encodedContent := base64.StdEncoding.EncodeToString(output)
+		if err != nil{
+			http.Error(w, "Failed to show password; Password inaccesible", http.StatusInternalServerError)
+		}
+		password_buffer, _ := io.ReadAll(file)
+
+		encodedContent := base64.StdEncoding.EncodeToString(password_buffer)
 
 		w.Header().Set("Content-Type", "text/html")
 
