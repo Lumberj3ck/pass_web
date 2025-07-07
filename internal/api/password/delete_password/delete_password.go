@@ -1,9 +1,9 @@
 package delete_password
 
 import (
+	"log"
 	"net/http"
 	"os/exec"
-	"log"
 	"path/filepath"
 
 	"github.com/gorilla/mux"

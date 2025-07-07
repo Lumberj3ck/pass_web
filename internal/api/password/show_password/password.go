@@ -17,32 +17,32 @@ import (
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-		t := templ.NewTemplate()
-		id := mux.Vars(r)["id"]
-		
-		passwordItem := show.PasswordsID[id]
-		passwordFile := passwordItem.Password
+	t := templ.NewTemplate()
+	id := mux.Vars(r)["id"]
 
-		passwordPath := passwordItem.Path
-		passwordPath = filepath.Join(passwordPath, passwordItem.Password)
+	passwordItem := show.PasswordsID[id]
+	passwordFile := passwordItem.Password
 
-		log.Println("Path password ", passwordPath)
-		file, err := os.Open(passwordPath)
+	passwordPath := passwordItem.Path
+	passwordPath = filepath.Join(passwordPath, passwordItem.Password)
 
-		if err != nil{
-			http.Error(w, "Failed to show password; Password inaccesible", http.StatusInternalServerError)
-		}
-		password_buffer, _ := io.ReadAll(file)
+	log.Println("Path password ", passwordPath)
+	file, err := os.Open(passwordPath)
 
-		encodedContent := base64.StdEncoding.EncodeToString(password_buffer)
-
-		w.Header().Set("Content-Type", "text/html")
-
-		t.Render(w, "password", struct {
-			PasswordFile           string
-			EncodedContent string
-		}{
-			PasswordFile :           passwordFile,
-			EncodedContent: encodedContent,
-		})
+	if err != nil {
+		http.Error(w, "Failed to show password; Password inaccesible", http.StatusInternalServerError)
 	}
+	password_buffer, _ := io.ReadAll(file)
+
+	encodedContent := base64.StdEncoding.EncodeToString(password_buffer)
+
+	w.Header().Set("Content-Type", "text/html")
+
+	t.Render(w, "password", struct {
+		PasswordFile   string
+		EncodedContent string
+	}{
+		PasswordFile:   passwordFile,
+		EncodedContent: encodedContent,
+	})
+}

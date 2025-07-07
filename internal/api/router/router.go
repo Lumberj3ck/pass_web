@@ -16,7 +16,6 @@ func NewMutexHandler() *mux.Router {
 	log.Println("Created a new template handler")
 	mu := mux.NewRouter()
 
-
 	mu.HandleFunc("/show", auth.AuthMiddlerware(show.Handler))
 	mu.HandleFunc("/auth", auth.Handler)
 

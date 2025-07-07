@@ -1,13 +1,13 @@
 package api
 
 import (
+	"embed"
 	"fmt"
 	"html/template"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
-	"embed"
 
 	"github.com/joho/godotenv"
 )
@@ -34,7 +34,7 @@ func GetTemplateDir() string {
 func NewTemplate(files ...string) Template {
 	// dir := GetTemplateDir()
 	var t *template.Template
-	if len(files) > 0{
+	if len(files) > 0 {
 		t = template.Must(template.ParseFS(TemplateFS, files...))
 	} else {
 		t = template.Must(template.ParseFS(TemplateFS, "templates/*.tmpl"))
@@ -49,9 +49,9 @@ type Template struct {
 }
 
 func (t *Template) Render(w io.Writer, name string, data interface{}) {
-	if name == ""{
+	if name == "" {
 		t.tmpl.Execute(w, data)
-		return 
+		return
 	}
 	t.tmpl.ExecuteTemplate(w, name, data)
 }
