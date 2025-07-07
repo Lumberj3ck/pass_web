@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"fmt"
 	templ "pass_web/internal/api/template"
 	"path/filepath"
 )
@@ -21,6 +22,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			password_name = fmt.Sprintf("%s.gpg", password_name)
 			decodedBytes, err := base64.StdEncoding.DecodeString(password_encrypted)
 
 			if err != nil {
