@@ -3,7 +3,7 @@ package delete_password
 import (
 	"log"
 	"net/http"
-	"os/exec"
+	"os"
 	"path/filepath"
 
 	"github.com/gorilla/mux"
@@ -19,8 +19,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	passwordPath := filepath.Join(passwordItem.Path, passwordFile)
 	log.Println(passwordPath)
 
-	cmd := exec.Command("rm", passwordPath)
-	err := cmd.Run()
+	err := os.Remove(passwordPath)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Failed to delete password", http.StatusInternalServerError)
