@@ -110,6 +110,18 @@ func AuthMiddlerware(next http.HandlerFunc) http.HandlerFunc {
 		_, err = DecodeJWT(auth_cookie.Value)
 		if err != nil {
 			log.Println(err)
+
+			cookie := http.Cookie{
+				Name:     "auth-token",
+				Value:    "",
+				HttpOnly: true,
+				Path:     "/",
+				Expires:  time.Now().Add(tokenExpirationDuration),
+				MaxAge: -1,
+				SameSite: http.SameSiteLaxMode,
+			}
+
+			http.SetCookie(w, &cookie)
 			w.WriteHeader(http.StatusNetworkAuthenticationRequired)
 			t.Render(w, "auth_provided_cookie_invalid", struct{}{})
 			return
@@ -130,6 +142,13 @@ func GenerateChallenge(m int) string {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
+	cookie, _ := r.Cookie("auth-token")
+
+	if (cookie != nil){
+		http.Redirect(w, r, "/show", http.StatusSeeOther)
+		return
+	}
+
 	t := templ.NewTemplate()
 	sign := r.FormValue("signature")
 	challengeId := r.FormValue("challengeId")
