@@ -39,26 +39,59 @@ async function handlePasswordDecrypt() {
 
     const privateKey = document.getElementById('privateKey').value;
 
-    if (window.passphrase.length == 0){
-        let p = prompt('Please enter your passphrase:');
-        window.passphrase = p
-        setTimeout(() => {window.passphrase = ""}, 1000 * 60 * 15);
-    }
+    // if (window.passphrase?.length == 0){
+    //     let passInput = document.getElementById("passphrase")
+    //     window.passphrase = passInput?.value
+    //     setTimeout(() => {window.passphrase = ""; 
+    //         if (passInput){
+    //             passInput.style.display = "block"
+    //         }
+    //
+    //     }, 1000 * 60 * 15);
+    // }
 
-    if (!window.passphrase) {
-        return;
-    }
+    // if (!window.passphrase) {
+    //     let passInput = document.getElementById("passphrase")
+    //     window.passphrase = passInput?.value
+    //     setTimeout(() => {window.passphrase = ""; 
+    //         if (passInput){
+    //             passInput.style.display = "block"
+    //         }
+    //
+    //     }, 1000 * 60);
+    // }
 
     try {
-        const decryptedContent = await decryptPassword(uint8Array, privateKey, window.passphrase);
+        let password;
+        let password_hide = false;
+        if (!window.passphrase) {
+            let passInput = document.getElementById("passphrase")
+            password_hide = true
+            password = passInput.value
+        } else {
+            password = window.passphrase
+        }
+        const decryptedContent = await decryptPassword(uint8Array, privateKey, password);
         passwordContent.querySelector('pre').textContent = decryptedContent;
+        document.getElementById("passphrase").style.display = "none"
+
+        if (password_hide){
+            let passInput = document.getElementById("passphrase")
+            window.passphrase = passInput?.value
+            setTimeout(() => {window.passphrase = ""; 
+                if (passInput){
+                    passInput.style.display = "block"
+                }
+
+            }, 1000 * 60);
+        }
     } catch (error) {
         alert('Failed to decrypt password: ' + error.message);
     }
 }
 
 // document.addEventListener('htmx:afterSwap', function(evt) {
-//     if (evt.detail.target.id === 'password-content') {
+//     if (evt.detail.tarkget.id === 'password-content') {
 //         const passwordMenu = document.getElementById('passwordMenu');
 //         passwordMenu.style.display = 'block';
 //     }

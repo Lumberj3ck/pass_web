@@ -1,11 +1,9 @@
 package show
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	auth "pass_web/internal/api/auth"
 	templ "pass_web/internal/api/template"
 	"path/filepath"
@@ -31,14 +29,8 @@ func init() {
 }
 
 func Handler(w http.ResponseWriter, e *http.Request) {
-	// dir := templ.GetTemplateDir()
-	// t, err := template.ParseFiles(filepath.Join(dir, "base.tmpl"), filepath.Join(dir, "show.tmpl"))
-	// t, err := template.ParseFS(TemplatesFS, "templates/base.tmpl",  "templates/show.tmpl")
 	t := templ.NewTemplate("templates/base.tmpl", "templates/show.tmpl")
 
-	// if err != nil {
-	// 	panic(err)
-	// }
 
 	prefix := os.Getenv("PREFIX")
 	uri_params := e.URL.Query()
@@ -52,29 +44,24 @@ func Handler(w http.ResponseWriter, e *http.Request) {
 		is_root = false
 	}
 	log.Println(password_path)
-	cmd := exec.Command("ls", password_path)
-	output, err := cmd.Output()
+
+	entries, err := os.ReadDir(password_path)
 
 	if err != nil {
-		log.Printf("cmd.Output() failed with %s\n", err)
+		log.Printf("Failed to read from password store: %s\n", err)
 	}
 
-	lines := strings.Split(string(output), "\n")
-	lines = lines[:len(lines)-1]
 	p := Page{}
 	p.Is_root = is_root
-	for i := 0; i < len(lines); i++ {
-		file_p := filepath.Join(password_path, lines[i])
-		fileInf, err := os.Stat(file_p)
 
-		if err != nil {
-			log.Println(fmt.Sprintf("Couldn't find a file %s", file_p))
+	for _, entry := range entries{
+		if strings.HasPrefix(entry.Name(), "."){
 			continue
 		}
 
 		passwordID := auth.GenerateChallenge(20)
-		p.Passwords = append(p.Passwords, PasswordItem{passwordID, lines[i], fileInf.IsDir(), password_path})
-		PasswordsID[passwordID] = PasswordItem{passwordID, lines[i], fileInf.IsDir(), password_path}
+		p.Passwords = append(p.Passwords, PasswordItem{passwordID, entry.Name(), entry.IsDir(), password_path})
+		PasswordsID[passwordID] = PasswordItem{passwordID, entry.Name(), entry.IsDir(), password_path}
 	}
 	t.Render(w, "", p)
 }
