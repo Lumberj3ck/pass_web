@@ -31,7 +31,6 @@ func init() {
 func Handler(w http.ResponseWriter, e *http.Request) {
 	t := templ.NewTemplate("templates/base.tmpl", "templates/show.tmpl")
 
-
 	prefix := os.Getenv("PREFIX")
 	uri_params := e.URL.Query()
 
@@ -54,8 +53,8 @@ func Handler(w http.ResponseWriter, e *http.Request) {
 	p := Page{}
 	p.Is_root = is_root
 
-	for _, entry := range entries{
-		if strings.HasPrefix(entry.Name(), "."){
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), ".") {
 			continue
 		}
 

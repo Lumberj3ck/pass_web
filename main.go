@@ -4,8 +4,6 @@ import (
 	"embed"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	router "pass_web/internal/api/router"
 	templ "pass_web/internal/api/template"
@@ -14,17 +12,16 @@ import (
 //go:embed templates/*
 var TemplateFS embed.FS
 
+//go:embed static/*
+var clientAssets embed.FS
+
 func main() {
 	templ.TemplateFS = TemplateFS
-	wd := os.Getenv("PASS_WEB_ROOT")
-	if wd == "" {
-		wd = "."
-	}
 
 	mu := router.NewMutexHandler()
-	staticDir := filepath.Join(wd, "static")
-	fs := http.FileServer(http.Dir(staticDir))
-	mu.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+
+	fs := http.FileServer(http.FS(clientAssets))
+	mu.PathPrefix("/static/").Handler(fs)
 
 	log.Println("Started listening on port 8080")
 	err := http.ListenAndServe(":8080", mu)

@@ -117,7 +117,7 @@ func AuthMiddlerware(next http.HandlerFunc) http.HandlerFunc {
 				HttpOnly: true,
 				Path:     "/",
 				Expires:  time.Now().Add(tokenExpirationDuration),
-				MaxAge: -1,
+				MaxAge:   -1,
 				SameSite: http.SameSiteLaxMode,
 			}
 
@@ -144,7 +144,7 @@ func GenerateChallenge(m int) string {
 func Handler(w http.ResponseWriter, r *http.Request) {
 	cookie, _ := r.Cookie("auth-token")
 
-	if (cookie != nil){
+	if cookie != nil {
 		http.Redirect(w, r, "/show", http.StatusSeeOther)
 		return
 	}
