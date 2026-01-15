@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	templ "pass_web/internal/api/template"
 	"time"
@@ -102,8 +104,10 @@ func AuthMiddlerware(next http.HandlerFunc) http.HandlerFunc {
 		t := templ.NewTemplate()
 
 		if err != nil {
-			w.WriteHeader(http.StatusNetworkAuthenticationRequired)
-			w.Write([]byte("Please provide auth cookie"))
+			unescaped_url := r.URL.String()
+			slog.Info("Not authentication ", "unescaped_url", unescaped_url)
+			next := url.QueryEscape(unescaped_url)
+			http.Redirect(w, r, fmt.Sprintf("/auth?next=%v", next), http.StatusSeeOther)
 			return
 		}
 
@@ -144,8 +148,10 @@ func GenerateChallenge(m int) string {
 func Handler(w http.ResponseWriter, r *http.Request) {
 	cookie, _ := r.Cookie("auth-token")
 
-	if cookie != nil {
-		http.Redirect(w, r, "/show", http.StatusSeeOther)
+	next := r.URL.Query().Get("next")
+
+	if cookie != nil && next == ""{
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
@@ -221,7 +227,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			http.SetCookie(w, &cookie)
-			w.Header().Set("HX-Redirect", "/show")
+			w.Header().Set("HX-Redirect", next)
 			w.WriteHeader(http.StatusOK)
 			return
 		}
