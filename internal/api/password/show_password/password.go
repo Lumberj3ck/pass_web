@@ -3,7 +3,7 @@ package show_password
 import (
 	"encoding/base64"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 
@@ -15,6 +15,10 @@ import (
 
 	templ "pass_web/internal/api/template"
 )
+type PasswordTempl struct {
+	PasswordFile   string
+	EncodedContent string
+}
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	t := templ.NewTemplate()
@@ -24,9 +28,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	passwordFile := passwordItem.Password
 
 	passwordPath := passwordItem.Path
-	passwordPath = filepath.Join(passwordPath, passwordItem.Password)
+	passwordPath = filepath.Join(passwordPath, passwordFile)
 
-	log.Println("Path password ", passwordPath)
 	file, err := os.Open(passwordPath)
 
 	if err != nil {
@@ -38,11 +41,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html")
 
-	t.Render(w, "password", struct {
-		PasswordFile   string
-		EncodedContent string
-	}{
-		PasswordFile:   passwordFile,
+	baseDir := filepath.Base(passwordItem.Path)
+	relativeFilename := filepath.Join(baseDir, passwordFile)
+	slog.Info("Password show ", "baseDir", baseDir, "relativeFilename", relativeFilename)
+
+	t.Render(w, "password", PasswordTempl{
+		PasswordFile:   relativeFilename,
 		EncodedContent: encodedContent,
 	})
 }
