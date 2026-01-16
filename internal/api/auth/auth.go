@@ -150,7 +150,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	next := r.URL.Query().Get("next")
 
-	if cookie != nil && next == ""{
+	if cookie != nil && next == "" {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}

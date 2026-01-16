@@ -15,6 +15,7 @@ import (
 
 	templ "pass_web/internal/api/template"
 )
+
 type PasswordTempl struct {
 	PasswordFile   string
 	EncodedContent string

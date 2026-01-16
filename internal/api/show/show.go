@@ -2,6 +2,7 @@ package show
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	auth "pass_web/internal/api/auth"
@@ -34,15 +35,23 @@ func Handler(w http.ResponseWriter, e *http.Request) {
 	prefix := os.Getenv("PREFIX")
 	uri_params := e.URL.Query()
 
-	subpath := uri_params["path"]
+	folder_id := uri_params["folder-id"]
 
 	password_path := prefix
 	is_root := true
-	if len(subpath) > 0 {
-		password_path = filepath.Join(prefix, subpath[0])
+	if len(folder_id) > 0 {
+		pi, ok := PasswordsID[folder_id[0]]
+		if !ok {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		// password_path = filepath.Join(prefix, folder_id[0])
+		password_path = filepath.Join(pi.Path, pi.Password)
 		is_root = false
 	}
-	log.Println(password_path)
+
+	slog.Info("Show password ", "password_path", password_path)
 
 	entries, err := os.ReadDir(password_path)
 
@@ -59,7 +68,9 @@ func Handler(w http.ResponseWriter, e *http.Request) {
 		}
 
 		passwordID := auth.GenerateChallenge(20)
+
 		p.Passwords = append(p.Passwords, PasswordItem{passwordID, entry.Name(), entry.IsDir(), password_path})
+
 		PasswordsID[passwordID] = PasswordItem{passwordID, entry.Name(), entry.IsDir(), password_path}
 	}
 	t.Render(w, "", p)
