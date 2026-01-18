@@ -29,11 +29,11 @@ func init() {
 	PasswordsID = make(map[string]PasswordItem)
 }
 
-func Handler(w http.ResponseWriter, e *http.Request) {
+func Handler(w http.ResponseWriter, r *http.Request) {
 	t := templ.NewTemplate("templates/base.tmpl", "templates/show.tmpl")
 
 	prefix := os.Getenv("PREFIX")
-	uri_params := e.URL.Query()
+	uri_params := r.URL.Query()
 
 	folder_id := uri_params["folder-id"]
 
