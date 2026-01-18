@@ -34,7 +34,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	file, err := os.Open(passwordPath)
 
 	if err != nil {
-		http.Error(w, "Failed to show password; Password inaccesible", http.StatusInternalServerError)
+		slog.Info("FAILED TO SHOW", "id", id, "PasswordItem", passwordItem)
+		http.Error(w, "Failed to show password; Password inaccesible", http.StatusBadRequest)
 	}
 	password_buffer, _ := io.ReadAll(file)
 

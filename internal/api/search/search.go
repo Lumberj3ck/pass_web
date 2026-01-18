@@ -1,11 +1,14 @@
 package search
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	show "pass_web/internal/api/show"
+	templ "pass_web/internal/api/template"
 
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
@@ -21,6 +24,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	if query == "" {
 		return
 	}
+
+	t := templ.NewTemplate("templates/password-item.tmpl")
 
 	prefix := os.Getenv("PREFIX")
 
@@ -54,7 +59,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	var resp strings.Builder
 
 	for _, match := range matches {
-		fmt.Fprintf(&resp, "<div>%v</div>", match)
+		var pi show.PasswordItem
+		puid, ok := show.PasswordsPath[match]
+
+		if !ok {
+			pi = show.NewPasswordItem(filepath.Base(match), false, filepath.Dir(filepath.Join(prefix, match)))
+			show.PasswordsID[pi.Id] = pi
+			show.PasswordsPath[match] = pi.Id
+			slog.Info("Show password ", "Map", match, "Id", pi.Id)
+		} else {
+			pi = show.PasswordsID[puid]
+		}
+
+		t.Render(&resp, "password-item", pi)
 	}
 	w.Write([]byte(resp.String()))
 }

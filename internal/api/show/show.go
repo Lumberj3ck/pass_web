@@ -18,7 +18,13 @@ type PasswordItem struct {
 	Path     string
 }
 
+func NewPasswordItem(password string, isDir bool, path string) PasswordItem {
+	id := auth.GenerateChallenge(20)
+	return PasswordItem{id, password, isDir, path}
+}
+
 var PasswordsID map[string]PasswordItem
+var PasswordsPath map[string]string
 
 type Page struct {
 	Is_root   bool
@@ -27,10 +33,11 @@ type Page struct {
 
 func init() {
 	PasswordsID = make(map[string]PasswordItem)
+	PasswordsPath = make(map[string]string)
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	t := templ.NewTemplate("templates/base.tmpl", "templates/show.tmpl")
+	t := templ.NewTemplate("templates/base.tmpl", "templates/show.tmpl", "templates/password-item.tmpl")
 
 	prefix := os.Getenv("PREFIX")
 	uri_params := r.URL.Query()
@@ -67,11 +74,16 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		passwordID := auth.GenerateChallenge(20)
+		var pi PasswordItem
 
-		p.Passwords = append(p.Passwords, PasswordItem{passwordID, entry.Name(), entry.IsDir(), password_path})
-
-		PasswordsID[passwordID] = PasswordItem{passwordID, entry.Name(), entry.IsDir(), password_path}
+		if _, ok := PasswordsPath[entry.Name()]; !ok{
+			pi = NewPasswordItem(entry.Name(), entry.IsDir(), password_path)
+			PasswordsID[pi.Id] = pi 
+			PasswordsPath[entry.Name()] = pi.Id
+		} else {
+			pi = PasswordsID[PasswordsPath[entry.Name()]]
+		}
+		p.Passwords = append(p.Passwords, pi)
 	}
 	t.Render(w, "", p)
 }
