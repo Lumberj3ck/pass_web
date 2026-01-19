@@ -21,34 +21,41 @@ type PasswordTempl struct {
 	EncodedContent string
 }
 
-func Handler(w http.ResponseWriter, r *http.Request) {
-	t := templ.NewTemplate()
-	id := mux.Vars(r)["id"]
+func Handler(ps *show.PasswordIdStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		t := templ.NewTemplate()
+		id := mux.Vars(r)["id"]
 
-	passwordItem := show.PasswordsID[id]
-	passwordFile := passwordItem.Password
+		passwordItem, ok := ps.Get(id)
+		if !ok {
+			http.Error(w, "Password inaccesible", http.StatusBadRequest)
+			return
+		}
+		passwordFile := passwordItem.Password
 
-	passwordPath := passwordItem.Path
-	passwordPath = filepath.Join(passwordPath, passwordFile)
+		passwordPath := passwordItem.Path
+		passwordPath = filepath.Join(passwordPath, passwordFile)
 
-	file, err := os.Open(passwordPath)
+		file, err := os.Open(passwordPath)
 
-	if err != nil {
-		slog.Info("FAILED TO SHOW", "id", id, "PasswordItem", passwordItem)
-		http.Error(w, "Failed to show password; Password inaccesible", http.StatusBadRequest)
+		if err != nil {
+			slog.Info("Ivalid password id", "id", id)
+			http.Error(w, "Failed to show password; Password inaccesible", http.StatusBadRequest)
+			return
+		}
+		password_buffer, _ := io.ReadAll(file)
+
+		encodedContent := base64.StdEncoding.EncodeToString(password_buffer)
+
+		w.Header().Set("Content-Type", "text/html")
+
+		baseDir := filepath.Base(passwordItem.Path)
+		relativeFilename := filepath.Join(baseDir, passwordFile)
+		slog.Info("Password show ", "baseDir", baseDir, "relativeFilename", relativeFilename)
+
+		t.Render(w, "password", PasswordTempl{
+			PasswordFile:   relativeFilename,
+			EncodedContent: encodedContent,
+		})
 	}
-	password_buffer, _ := io.ReadAll(file)
-
-	encodedContent := base64.StdEncoding.EncodeToString(password_buffer)
-
-	w.Header().Set("Content-Type", "text/html")
-
-	baseDir := filepath.Base(passwordItem.Path)
-	relativeFilename := filepath.Join(baseDir, passwordFile)
-	slog.Info("Password show ", "baseDir", baseDir, "relativeFilename", relativeFilename)
-
-	t.Render(w, "password", PasswordTempl{
-		PasswordFile:   relativeFilename,
-		EncodedContent: encodedContent,
-	})
 }

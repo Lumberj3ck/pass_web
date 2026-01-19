@@ -13,70 +13,71 @@ import (
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
-func Handler(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
-		return
-	}
-	query := r.Form.Get("query")
-
-	if query == "" {
-		return
-	}
-
-	t := templ.NewTemplate("templates/password-item.tmpl")
-
-	prefix := utils.GetStorePrefix()
-
-	fuzzy_entries := make([]string, 0)
-
-	err = filepath.WalkDir(prefix, func(path string, d os.DirEntry, err error) error {
+func Handler(ps *show.PasswordIdStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
 		if err != nil {
-			return err
+			http.Error(w, "invalid form data", http.StatusBadRequest)
+			return
+		}
+		query := r.Form.Get("query")
+
+		if query == "" {
+			return
 		}
 
-		rel_path, err := filepath.Rel(prefix, path)
-		if err != nil {
-			return err
-		}
+		t := templ.NewTemplate("templates/password-item.tmpl")
 
-		if strings.HasPrefix(rel_path, ".") {
-			return nil
-		}
+		prefix := utils.GetStorePrefix()
 
-		if !d.IsDir() {
+		fuzzy_entries := make([]string, 0)
+
+		err = filepath.WalkDir(prefix, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
 			rel_path, err := filepath.Rel(prefix, path)
 			if err != nil {
 				return err
 			}
-			fuzzy_entries = append(fuzzy_entries, rel_path)
+
+			if strings.HasPrefix(rel_path, ".") {
+				return nil
+			}
+
+			if !d.IsDir() {
+				rel_path, err := filepath.Rel(prefix, path)
+				if err != nil {
+					return err
+				}
+				fuzzy_entries = append(fuzzy_entries, rel_path)
+			}
+			return nil
+		})
+		matches := fuzzy.Find(query, fuzzy_entries)
+
+		var resp strings.Builder
+
+		for _, match := range matches {
+			var pi show.PasswordItem
+			puid, ok := ps.GetUid(match)
+
+			if !ok {
+				pi = show.NewPasswordItem(filepath.Base(match), false, filepath.Dir(filepath.Join(prefix, match)), match)
+				ps.Add(pi)
+			} else {
+				pi, _ = ps.Get(puid)
+			}
+
+			pageItem := show.PasswordPageItem{
+				PasswordItem: pi,
+				Relative:     true,
+				WithConsume:  false,
+			}
+
+			t.Render(&resp, "password-item", pageItem)
 		}
-		return nil
-	})
-	matches := fuzzy.Find(query, fuzzy_entries)
-
-	var resp strings.Builder
-
-	for _, match := range matches {
-		var pi show.PasswordItem
-		puid, ok := show.PasswordsPath[match]
-
-		if !ok {
-			pi = show.NewPasswordItem(filepath.Base(match), false, filepath.Dir(filepath.Join(prefix, match)), match)
-			show.PasswordsID[pi.Id] = pi
-			show.PasswordsPath[match] = pi.Id
-		} else {
-			pi = show.PasswordsID[puid]
-		}
-
-		pageItem := show.PasswordPageItem{
-			PasswordItem: pi,
-			Relative:     true,
-			WithConsume:  false,
-		}
-
-		t.Render(&resp, "password-item", pageItem)
+		w.Write([]byte(resp.String()))
 	}
-	w.Write([]byte(resp.String()))
 }

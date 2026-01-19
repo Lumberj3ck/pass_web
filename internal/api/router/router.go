@@ -13,18 +13,18 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func NewMutexHandler() *mux.Router {
+func NewMutexHandler(ps *show.PasswordIdStore) *mux.Router {
 	log.Println("Created a new template handler")
 	mu := mux.NewRouter()
 
-	mu.HandleFunc("/", auth.AuthMiddlerware(show.Handler))
+	mu.HandleFunc("/", auth.AuthMiddlerware(show.Handler(ps)))
 	mu.HandleFunc("/auth", auth.Handler)
 
-	mu.HandleFunc("/password/{id}", auth.AuthMiddlerware(show_password.Handler)).Methods("POST")
-	mu.HandleFunc("/password/{id}", auth.AuthMiddlerware(delete_password.Handler)).Methods("DELETE")
+	mu.HandleFunc("/password/{id}", auth.AuthMiddlerware(show_password.Handler(ps))).Methods("POST")
+	mu.HandleFunc("/password/{id}", auth.AuthMiddlerware(delete_password.Handler(ps))).Methods("DELETE")
 	mu.HandleFunc("/insert", auth.AuthMiddlerware(insert_password.Handler)).Methods("POST", "GET")
 
-	mu.HandleFunc("/search", auth.AuthMiddlerware(search.Handler))
+	mu.HandleFunc("/search", auth.AuthMiddlerware(search.Handler(ps)))
 	log.Println("Started listening")
 	return mu
 }

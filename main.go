@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	router "pass_web/internal/api/router"
+	show "pass_web/internal/api/show"
 	templ "pass_web/internal/api/template"
 )
 
@@ -22,14 +23,15 @@ func main() {
 	port := flag.Int("port", 8080, "Port to listen on")
 	flag.Parse()
 
-	mu := router.NewMutexHandler()
+	passwordStore := show.NewPasswordIdStore()
+	mu := router.NewMutexHandler(passwordStore)
 
 	fs := http.FileServer(http.FS(clientAssets))
 	mu.PathPrefix("/static/").Handler(fs)
 
 	log.Println("Started http server ", "port", *port)
 
-	err := http.ListenAndServe(fmt.Sprintf(":%v",*port), mu)
+	err := http.ListenAndServe(fmt.Sprintf(":%v", *port), mu)
 	if err != nil {
 		panic(err)
 	}
