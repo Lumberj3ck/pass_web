@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"pass_web/internal/api/auth"
 	router "pass_web/internal/api/router"
 	show "pass_web/internal/api/show"
 	templ "pass_web/internal/api/template"
@@ -24,7 +25,8 @@ func main() {
 	flag.Parse()
 
 	passwordStore := show.NewPasswordIdStore()
-	mu := router.NewMutexHandler(passwordStore)
+	userChallenges := auth.NewUserChalenges()
+	mu := router.NewMutexHandler(passwordStore, userChallenges)
 
 	fs := http.FileServer(http.FS(clientAssets))
 	mu.PathPrefix("/static/").Handler(fs)
