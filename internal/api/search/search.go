@@ -1,7 +1,6 @@
 package search
 
 import (
-	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -63,15 +62,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		puid, ok := show.PasswordsPath[match]
 
 		if !ok {
-			pi = show.NewPasswordItem(filepath.Base(match), false, filepath.Dir(filepath.Join(prefix, match)))
+			pi = show.NewPasswordItem(filepath.Base(match), false, filepath.Dir(filepath.Join(prefix, match)), match)
 			show.PasswordsID[pi.Id] = pi
 			show.PasswordsPath[match] = pi.Id
-			slog.Info("Show password ", "Map", match, "Id", pi.Id)
 		} else {
 			pi = show.PasswordsID[puid]
 		}
 
-		t.Render(&resp, "password-item", pi)
+		pageItem := show.PasswordPageItem{
+			PasswordItem: pi,
+			Relative: true,
+		}
+
+		t.Render(&resp, "password-item", pageItem)
 	}
 	w.Write([]byte(resp.String()))
 }

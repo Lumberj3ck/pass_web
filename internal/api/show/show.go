@@ -16,19 +16,25 @@ type PasswordItem struct {
 	Password string
 	IsDir    bool
 	Path     string
+	RelativePath string
 }
 
-func NewPasswordItem(password string, isDir bool, path string) PasswordItem {
+func NewPasswordItem(password string, isDir bool, path string, relativePath string) PasswordItem {
 	id := auth.GenerateChallenge(20)
-	return PasswordItem{id, password, isDir, path}
+	return PasswordItem{id, password, isDir, path, relativePath}
 }
 
 var PasswordsID map[string]PasswordItem
 var PasswordsPath map[string]string
 
+type PasswordPageItem struct {
+	PasswordItem
+	Relative bool
+}
+
 type Page struct {
 	Is_root   bool
-	Passwords []PasswordItem
+	Passwords []PasswordPageItem
 }
 
 func init() {
@@ -53,7 +59,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// password_path = filepath.Join(prefix, folder_id[0])
 		password_path = filepath.Join(pi.Path, pi.Password)
 		is_root = false
 	}
@@ -77,13 +82,24 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		var pi PasswordItem
 
 		if _, ok := PasswordsPath[entry.Name()]; !ok{
-			pi = NewPasswordItem(entry.Name(), entry.IsDir(), password_path)
+			rel_path, err := filepath.Rel(prefix, filepath.Join(password_path, entry.Name()))
+			if err != nil {
+				slog.Warn("Failed to get relative path", "error", err)
+				continue
+			}
+			slog.Info("Show password hander", "rel_path", rel_path)
+
+			pi = NewPasswordItem(entry.Name(), entry.IsDir(), password_path, rel_path)
 			PasswordsID[pi.Id] = pi 
 			PasswordsPath[entry.Name()] = pi.Id
 		} else {
 			pi = PasswordsID[PasswordsPath[entry.Name()]]
 		}
-		p.Passwords = append(p.Passwords, pi)
+		pageItem := PasswordPageItem{
+			pi,
+			false,
+		}
+		p.Passwords = append(p.Passwords, pageItem)
 	}
 	t.Render(w, "", p)
 }
