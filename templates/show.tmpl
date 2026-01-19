@@ -150,6 +150,9 @@ Show
 function openSearch() {
   const dialog = document.getElementById('search-dialog');
   const input = document.getElementById('search-input');
+
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-results').innerHTML = '<div class="px-4 py-8 text-center text-gray-500 text-sm">Start typing to search passwords...</div>';
   dialog.showModal();
   setTimeout(() => input.focus(), 50);
 }
@@ -157,8 +160,6 @@ function openSearch() {
 function closeSearch() {
   const dialog = document.getElementById('search-dialog');
   dialog.close();
-  document.getElementById('search-input').value = '';
-  document.getElementById('search-results').innerHTML = '<div class="px-4 py-8 text-center text-gray-500 text-sm">Start typing to search passwords...</div>';
 }
 
 function handleSearchClick(path) {
@@ -175,7 +176,15 @@ document.addEventListener('keydown', function(e) {
     closeSearch();
   }
 });
+
+document.getElementById('search-dialog').addEventListener('htmx:trigger', function(e) {
+     searchInput = document.getElementById('search-input');
+     if (e.target !==  searchInput && e.target !== e.currentTarget) {
+         closeSearch();
+     }
+});
 </script>
+
 
 {{ end }}
 </div>

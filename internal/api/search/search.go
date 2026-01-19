@@ -71,7 +71,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 		pageItem := show.PasswordPageItem{
 			PasswordItem: pi,
-			Relative: true,
+			Relative:     true,
+			WithConsume:  false,
 		}
 
 		t.Render(&resp, "password-item", pageItem)

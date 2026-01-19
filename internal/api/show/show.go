@@ -12,10 +12,10 @@ import (
 )
 
 type PasswordItem struct {
-	Id       string
-	Password string
-	IsDir    bool
-	Path     string
+	Id           string
+	Password     string
+	IsDir        bool
+	Path         string
 	RelativePath string
 }
 
@@ -29,7 +29,8 @@ var PasswordsPath map[string]string
 
 type PasswordPageItem struct {
 	PasswordItem
-	Relative bool
+	Relative    bool
+	WithConsume bool
 }
 
 type Page struct {
@@ -81,16 +82,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 		var pi PasswordItem
 
-		if _, ok := PasswordsPath[entry.Name()]; !ok{
+		if _, ok := PasswordsPath[entry.Name()]; !ok {
 			rel_path, err := filepath.Rel(prefix, filepath.Join(password_path, entry.Name()))
 			if err != nil {
 				slog.Warn("Failed to get relative path", "error", err)
 				continue
 			}
-			slog.Info("Show password hander", "rel_path", rel_path)
-
 			pi = NewPasswordItem(entry.Name(), entry.IsDir(), password_path, rel_path)
-			PasswordsID[pi.Id] = pi 
+			PasswordsID[pi.Id] = pi
 			PasswordsPath[entry.Name()] = pi.Id
 		} else {
 			pi = PasswordsID[PasswordsPath[entry.Name()]]
@@ -98,6 +97,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		pageItem := PasswordPageItem{
 			pi,
 			false,
+			true,
 		}
 		p.Passwords = append(p.Passwords, pageItem)
 	}
