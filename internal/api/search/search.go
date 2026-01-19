@@ -8,6 +8,7 @@ import (
 
 	show "pass_web/internal/api/show"
 	templ "pass_web/internal/api/template"
+	"pass_web/internal/utils"
 
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
@@ -26,7 +27,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	t := templ.NewTemplate("templates/password-item.tmpl")
 
-	prefix := os.Getenv("PREFIX")
+	prefix := utils.GetStorePrefix()
 
 	fuzzy_entries := make([]string, 0)
 

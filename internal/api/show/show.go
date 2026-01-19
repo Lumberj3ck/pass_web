@@ -7,6 +7,7 @@ import (
 	"os"
 	auth "pass_web/internal/api/auth"
 	templ "pass_web/internal/api/template"
+	utils "pass_web/internal/utils"
 	"path/filepath"
 	"strings"
 )
@@ -46,7 +47,7 @@ func init() {
 func Handler(w http.ResponseWriter, r *http.Request) {
 	t := templ.NewTemplate("templates/base.tmpl", "templates/show.tmpl", "templates/password-item.tmpl")
 
-	prefix := os.Getenv("PREFIX")
+	prefix := utils.GetStorePrefix()
 	uri_params := r.URL.Query()
 
 	folder_id := uri_params["folder-id"]

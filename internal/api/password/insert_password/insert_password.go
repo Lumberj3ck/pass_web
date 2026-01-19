@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	templ "pass_web/internal/api/template"
+	"pass_web/internal/utils"
 	"path/filepath"
 )
 
@@ -29,7 +30,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		prefix := os.Getenv("PREFIX")
+		prefix := utils.GetStorePrefix()
 		log.Println(password_name)
 		file, err := os.Create(filepath.Join(prefix, password_name))
 		if err != nil {

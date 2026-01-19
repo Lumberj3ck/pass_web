@@ -2,6 +2,8 @@ package main
 
 import (
 	"embed"
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -17,14 +19,17 @@ var clientAssets embed.FS
 
 func main() {
 	templ.TemplateFS = TemplateFS
+	port := flag.Int("port", 8080, "Port to listen on")
+	flag.Parse()
 
 	mu := router.NewMutexHandler()
 
 	fs := http.FileServer(http.FS(clientAssets))
 	mu.PathPrefix("/static/").Handler(fs)
 
-	log.Println("Started listening on port 8080")
-	err := http.ListenAndServe(":8080", mu)
+	log.Println("Started http server ", "port", *port)
+
+	err := http.ListenAndServe(fmt.Sprintf(":%v",*port), mu)
 	if err != nil {
 		panic(err)
 	}

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"log/slog"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -105,7 +104,6 @@ func AuthMiddlerware(next http.HandlerFunc) http.HandlerFunc {
 
 		if err != nil {
 			unescaped_url := r.URL.String()
-			slog.Info("Not authentication ", "unescaped_url", unescaped_url)
 			next := url.QueryEscape(unescaped_url)
 			http.Redirect(w, r, fmt.Sprintf("/auth?next=%v", next), http.StatusSeeOther)
 			return
