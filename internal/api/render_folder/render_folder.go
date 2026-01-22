@@ -1,4 +1,4 @@
-package show
+package render_folder
 
 import (
 	"log"
@@ -19,6 +19,11 @@ type PasswordItem struct {
 	IsDir        bool
 	Path         string
 	RelativePath string
+}
+
+func NewFolderItem(password string, path string, relativePath string) PasswordItem {
+	id := auth.GenerateChallenge(20)
+	return PasswordItem{id, password, true, path, relativePath}
 }
 
 func NewPasswordItem(password string, isDir bool, path string, relativePath string) PasswordItem {
@@ -124,7 +129,11 @@ func Handler(ps *PasswordIdStore) http.HandlerFunc {
 			}
 			pi, ok := ps.GetByPassword(rel_path)
 			if !ok {
-				pi = NewPasswordItem(entry.Name(), entry.IsDir(), password_path, rel_path)
+				if entry.IsDir() {
+					pi = NewFolderItem(entry.Name(), password_path, rel_path)
+				} else {
+					pi = NewPasswordItem(entry.Name(), entry.IsDir(), password_path, rel_path)
+				}
 				ps.Add(pi)
 			}
 			pageItem := PasswordPageItem{

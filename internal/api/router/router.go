@@ -3,21 +3,21 @@ package router
 import (
 	"log"
 	"pass_web/internal/api/auth"
-	"pass_web/internal/api/show"
+	"pass_web/internal/api/render_folder"
 
-	delete_password "pass_web/internal/api/password/delete_password"
-	insert_password "pass_web/internal/api/password/insert_password"
-	show_password "pass_web/internal/api/password/show_password"
-	search "pass_web/internal/api/search"
+	"pass_web/internal/api/password/delete_password"
+	"pass_web/internal/api/password/insert_password"
+	"pass_web/internal/api/password/show_password"
+	"pass_web/internal/api/search"
 
 	"github.com/gorilla/mux"
 )
 
-func NewMutexHandler(ps *show.PasswordIdStore, uc *auth.UserChalenges) *mux.Router {
+func NewMutexHandler(ps *render_folder.PasswordIdStore, uc *auth.UserChalenges) *mux.Router {
 	log.Println("Created a new template handler")
 	mu := mux.NewRouter()
 
-	mu.HandleFunc("/", auth.AuthMiddlerware(show.Handler(ps)))
+	mu.HandleFunc("/", auth.AuthMiddlerware(render_folder.Handler(ps)))
 	mu.HandleFunc("/auth", auth.Handler(uc))
 
 	mu.HandleFunc("/password/{id}", auth.AuthMiddlerware(show_password.Handler(ps))).Methods("POST")

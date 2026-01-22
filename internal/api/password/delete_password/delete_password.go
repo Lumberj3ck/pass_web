@@ -8,10 +8,10 @@ import (
 
 	"github.com/gorilla/mux"
 
-	show "pass_web/internal/api/show"
+	"pass_web/internal/api/render_folder"
 )
 
-func Handler(ps *show.PasswordIdStore) http.HandlerFunc {
+func Handler(ps *render_folder.PasswordIdStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["id"]
 

@@ -6,14 +6,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	show "pass_web/internal/api/show"
+	"pass_web/internal/api/render_folder"
 	templ "pass_web/internal/api/template"
 	"pass_web/internal/utils"
 
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
-func Handler(ps *show.PasswordIdStore) http.HandlerFunc {
+func Handler(ps *render_folder.PasswordIdStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
@@ -60,17 +60,17 @@ func Handler(ps *show.PasswordIdStore) http.HandlerFunc {
 		var resp strings.Builder
 
 		for _, match := range matches {
-			var pi show.PasswordItem
+			var pi render_folder.PasswordItem
 			puid, ok := ps.GetUid(match)
 
 			if !ok {
-				pi = show.NewPasswordItem(filepath.Base(match), false, filepath.Dir(filepath.Join(prefix, match)), match)
+				pi = render_folder.NewPasswordItem(filepath.Base(match), false, filepath.Dir(filepath.Join(prefix, match)), match)
 				ps.Add(pi)
 			} else {
 				pi, _ = ps.Get(puid)
 			}
 
-			pageItem := show.PasswordPageItem{
+			pageItem := render_folder.PasswordPageItem{
 				PasswordItem: pi,
 				Relative:     true,
 				WithConsume:  false,

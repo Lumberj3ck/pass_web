@@ -9,7 +9,7 @@ import (
 
 	"os"
 
-	show "pass_web/internal/api/show"
+	"pass_web/internal/api/render_folder"
 
 	"github.com/gorilla/mux"
 
@@ -21,7 +21,7 @@ type PasswordTempl struct {
 	EncodedContent string
 }
 
-func Handler(ps *show.PasswordIdStore) http.HandlerFunc {
+func Handler(ps *render_folder.PasswordIdStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		t := templ.NewTemplate()
 		id := mux.Vars(r)["id"]

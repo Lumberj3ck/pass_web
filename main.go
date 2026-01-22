@@ -9,7 +9,7 @@ import (
 
 	"pass_web/internal/api/auth"
 	router "pass_web/internal/api/router"
-	show "pass_web/internal/api/show"
+	render_folder "pass_web/internal/api/render_folder"
 	templ "pass_web/internal/api/template"
 )
 
@@ -24,7 +24,7 @@ func main() {
 	port := flag.Int("port", 8080, "Port to listen on")
 	flag.Parse()
 
-	passwordStore := show.NewPasswordIdStore()
+	passwordStore := render_folder.NewPasswordIdStore()
 	userChallenges := auth.NewUserChalenges()
 	mu := router.NewMutexHandler(passwordStore, userChallenges)
 
