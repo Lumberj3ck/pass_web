@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	templ "pass_web/internal/api/template"
@@ -26,15 +27,16 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		decodedBytes, err := base64.StdEncoding.DecodeString(password_encrypted)
 
 		if err != nil {
-			http.Error(w, "Failed to decode encrypted password (invalid Base64): "+err.Error(), http.StatusBadRequest)
+			http.Error(w, "Failed to decode encrypted password (invalid Base64)", http.StatusBadRequest)
 			return
 		}
 
 		prefix := utils.GetStorePrefix()
 		log.Println(password_name)
 		file, err := os.Create(filepath.Join(prefix, password_name))
+		slog.Warn("Creating file", "file", file, "error", err)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to create file", http.StatusInternalServerError)
 			return
 		}
 		defer file.Close()

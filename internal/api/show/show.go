@@ -116,13 +116,14 @@ func Handler(ps *PasswordIdStore) http.HandlerFunc {
 				continue
 			}
 
-			pi, ok := ps.GetByPassword(entry.Name())
+			rel_path, err := filepath.Rel(prefix, filepath.Join(password_path, entry.Name()))
+
+			if err != nil {
+				slog.Warn("Failed to get relative path", "error", err)
+				continue
+			}
+			pi, ok := ps.GetByPassword(rel_path)
 			if !ok {
-				rel_path, err := filepath.Rel(prefix, filepath.Join(password_path, entry.Name()))
-				if err != nil {
-					slog.Warn("Failed to get relative path", "error", err)
-					continue
-				}
 				pi = NewPasswordItem(entry.Name(), entry.IsDir(), password_path, rel_path)
 				ps.Add(pi)
 			}
