@@ -29,9 +29,9 @@ type Page struct {
 	ChallengeID string
 }
 
-type Challenge struct{
+type Challenge struct {
 	Challenge string
-	Created  time.Time
+	Created   time.Time
 }
 
 type UserChalenges struct {
@@ -51,10 +51,10 @@ func NewUserChalenges() *UserChalenges {
 func (uc *UserChalenges) cleanupExpired() {
 	t := time.Tick(time.Minute * 1)
 
-	for range t{
+	for range t {
 		uc.mu.Lock()
-		for k, v := range uc.chalenges{
-			if time.Since(v.Created) >= challengeTimeToLive{
+		for k, v := range uc.chalenges {
+			if time.Since(v.Created) >= challengeTimeToLive {
 				slog.Info("Deleted expired challenge", "challenge", v.Challenge)
 				delete(uc.chalenges, k)
 			}
@@ -62,7 +62,6 @@ func (uc *UserChalenges) cleanupExpired() {
 		uc.mu.Unlock()
 	}
 }
-
 
 func (uc *UserChalenges) Add() (string, string) {
 	uc.mu.Lock()
@@ -196,98 +195,103 @@ func GenerateChallenge(m int) string {
 
 func Handler(uc *UserChalenges) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// separate this into post and get
-		cookie, _ := r.Cookie("auth-token")
+		if r.Method == "GET" {
+			challenge, randomId := uc.Add()
+			t := templ.NewTemplate("templates/base.tmpl", "templates/auth.tmpl")
+			t.Render(w, "", Page{challenge, randomId})
+		} else {
+			cookie, _ := r.Cookie("auth-token")
 
-		next := r.URL.Query().Get("next")
+			next := r.URL.Query().Get("next")
 
-		if cookie != nil && next == "" {
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-
-		t := templ.NewTemplate()
-		sign := r.FormValue("signature")
-		challengeId := r.FormValue("challengeId")
-		if sign != "" && challengeId != "" {
-			original, ok := uc.Get(challengeId)
-			if !ok {
-				t.Render(w, "oob-auth-id-fail", struct{}{})
+			if cookie != nil && next == "" {
+				http.Redirect(w, r, "/", http.StatusSeeOther)
 				return
 			}
 
-			pgp := crypto.PGP()
+			t := templ.NewTemplate()
+			sign := r.FormValue("signature")
+			challengeId := r.FormValue("challengeId")
+			if sign != "" && challengeId != "" {
+				original, ok := uc.Get(challengeId)
+				if !ok {
+					t.Render(w, "oob-auth-id-fail", struct{}{})
+					return
+				}
 
-			pub_key_path := os.Getenv("PASSWEB_PUB_KEY_PATH")
-			if len(pub_key_path) == 0 {
-				pub_key_path = "pubKeyTest.gpg"
-			}
-			log.Println(pub_key_path)
-			file, err := os.Open(pub_key_path)
-			defer file.Close()
-			if err != nil {
-				panic(err)
-			}
+				pgp := crypto.PGP()
 
-			buffer, err := io.ReadAll(file)
-			if err != nil {
-				panic(err)
-			}
-			pubkeyArmored := string(buffer)
-
-			publicKey, err := crypto.NewKeyFromArmored(pubkeyArmored)
-
-			if err != nil {
-				panic(err)
-			}
-
-			verifier, err := pgp.Verify().VerificationKey(publicKey).New()
-
-			verifyResult, err := verifier.VerifyCleartext([]byte(sign))
-			if err != nil {
-				log.Println(err)
-				t.Render(w, "oob-auth-signature-fail", struct{}{})
-				return
-			}
-
-			if sigErr := verifyResult.SignatureError(); sigErr != nil {
-				log.Println("Check sign sig err")
-				log.Println(sigErr.Error())
-				t.Render(w, "oob-auth-signature-fail", struct{}{})
-
-				return
-			}
-
-			log.Println(string(verifyResult.Cleartext()))
-
-			decrypted := string(verifyResult.Cleartext())
-			if decrypted == original {
-
-				jwt_auth_token, err := GenerateJWT()
+				pub_key_path := os.Getenv("PASSWEB_PUB_KEY_PATH")
+				if len(pub_key_path) == 0 {
+					pub_key_path = "pubKeyTest.gpg"
+				}
+				log.Println(pub_key_path)
+				file, err := os.Open(pub_key_path)
+				defer file.Close()
 				if err != nil {
-					panic(err)
+					t.Render(w, "oob-auth-key-not-found", struct{}{})
+					return
 				}
 
-				cookie := http.Cookie{
-					Name:     "auth-token",
-					Value:    jwt_auth_token,
-					HttpOnly: true,
-					Path:     "/",
-					Expires:  time.Now().Add(tokenExpirationDuration),
-					SameSite: http.SameSiteLaxMode,
+				buffer, err := io.ReadAll(file)
+				if err != nil {
+					t.Render(w, "oob-auth-key-read-fail", struct{}{})
+					return
+				}
+				pubkeyArmored := string(buffer)
+
+				publicKey, err := crypto.NewKeyFromArmored(pubkeyArmored)
+
+				if err != nil {
+					t.Render(w, "oob-auth-invalid-key", struct{}{})
+					return
 				}
 
-				http.SetCookie(w, &cookie)
-				w.Header().Set("HX-Redirect", next)
-				w.WriteHeader(http.StatusOK)
-				return
+				verifier, err := pgp.Verify().VerificationKey(publicKey).New()
+
+				verifyResult, err := verifier.VerifyCleartext([]byte(sign))
+				if err != nil {
+					log.Println(err)
+					t.Render(w, "oob-auth-signature-fail", struct{}{})
+					return
+				}
+
+				if sigErr := verifyResult.SignatureError(); sigErr != nil {
+					log.Println("Check sign sig err")
+					log.Println(sigErr.Error())
+					t.Render(w, "oob-auth-signature-fail", struct{}{})
+
+					return
+				}
+
+				log.Println(string(verifyResult.Cleartext()))
+
+				decrypted := string(verifyResult.Cleartext())
+				if decrypted == original {
+
+					jwt_auth_token, err := GenerateJWT()
+					if err != nil {
+						slog.Error("Failed to generate JWT token", "error", err)
+						t.Render(w, "oob-auth-failed-jwt", struct{}{})
+						return
+					}
+
+					cookie := http.Cookie{
+						Name:     "auth-token",
+						Value:    jwt_auth_token,
+						HttpOnly: true,
+						Path:     "/",
+						Expires:  time.Now().Add(tokenExpirationDuration),
+						SameSite: http.SameSiteLaxMode,
+					}
+
+					http.SetCookie(w, &cookie)
+					w.Header().Set("HX-Redirect", next)
+					w.WriteHeader(http.StatusOK)
+					return
+				}
 			}
 		}
 
-
-		challenge, randomId := uc.Add()
-		t = templ.NewTemplate("templates/base.tmpl", "templates/auth.tmpl")
-
-		t.Render(w, "", Page{challenge, randomId})
 	}
 }

@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	"pass_web/internal/api/auth"
-	router "pass_web/internal/api/router"
 	render_folder "pass_web/internal/api/render_folder"
+	router "pass_web/internal/api/router"
 	templ "pass_web/internal/api/template"
 )
 

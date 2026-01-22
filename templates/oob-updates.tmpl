@@ -21,8 +21,32 @@ Challenge id either expired or incorect
 </div>
 {{end}}
 
+{{ block "oob-auth-failed-jwt" .}}
+<div id="result" class="text-red-400" hx-swap-oob="true">
+Failed to generate JWT token
+</div>
+{{end}}
+
+{{ block "oob-auth-invalid-key" .}}
+<div id="result" class="text-red-400" hx-swap-oob="true">
+Invalid public key
+</div>
+{{end}}
+
+{{ block "oob-auth-key-read-fail" .}}
+<div id="result" class="text-red-400" hx-swap-oob="true">
+Public key could not be read
+</div>
+{{end}}
+
+{{ block "oob-auth-key-not-found" .}}
+<div id="result" class="text-red-400" hx-swap-oob="true">
+Public key path not found 
+</div>
+{{end}}
+
 {{ block "oob-auth-signature-fail" .}}
-<div id="result" hx-swap-oob="true">
+<div id="result" class="text-red-400" hx-swap-oob="true">
 Provided signature is not valid 
 </div>
 {{end}}

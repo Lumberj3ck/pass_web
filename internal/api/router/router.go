@@ -18,7 +18,7 @@ func NewMutexHandler(ps *render_folder.PasswordIdStore, uc *auth.UserChalenges) 
 	mu := mux.NewRouter()
 
 	mu.HandleFunc("/", auth.AuthMiddlerware(render_folder.Handler(ps)))
-	mu.HandleFunc("/auth", auth.Handler(uc))
+	mu.HandleFunc("/auth", auth.Handler(uc)).Methods("POST", "GET")
 
 	mu.HandleFunc("/password/{id}", auth.AuthMiddlerware(show_password.Handler(ps))).Methods("POST")
 	mu.HandleFunc("/password/{id}", auth.AuthMiddlerware(delete_password.Handler(ps))).Methods("DELETE")
