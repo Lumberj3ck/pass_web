@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -21,34 +22,67 @@ import (
 
 const challengeAmountOfChars = 20
 const tokenExpirationDuration = time.Hour * 24
+const challengeTimeToLive = time.Minute * 2
 
 type Page struct {
 	Challenge   string
 	ChallengeID string
 }
 
+type Challenge struct{
+	Challenge string
+	Created  time.Time
+}
+
 type UserChalenges struct {
-	chalenges map[string]string
+	chalenges map[string]Challenge
 	mu        sync.RWMutex
 }
 
 func NewUserChalenges() *UserChalenges {
-	return &UserChalenges{
-		chalenges: make(map[string]string),
+	uc := &UserChalenges{
+		chalenges: make(map[string]Challenge),
+	}
+
+	go uc.cleanupExpired()
+	return uc
+}
+
+func (uc *UserChalenges) cleanupExpired() {
+	t := time.Tick(time.Minute * 1)
+
+	for range t{
+		uc.mu.Lock()
+		for k, v := range uc.chalenges{
+			if time.Since(v.Created) >= challengeTimeToLive{
+				slog.Info("Deleted expired challenge", "challenge", v.Challenge)
+				delete(uc.chalenges, k)
+			}
+		}
+		uc.mu.Unlock()
 	}
 }
 
-func (uc *UserChalenges) Add(id string, challenge string) {
+
+func (uc *UserChalenges) Add() (string, string) {
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
-	uc.chalenges[id] = challenge
+
+	id := uuid.New()
+	randomId := id.String()
+
+	randomChallenge := GenerateChallenge(challengeAmountOfChars)
+
+	slog.Info("New challenge created", "challenge", randomChallenge)
+	uc.chalenges[randomId] = Challenge{randomChallenge, time.Now()}
+	return randomChallenge, randomId
 }
 
 func (uc *UserChalenges) Get(id string) (string, bool) {
 	uc.mu.RLock()
 	defer uc.mu.RUnlock()
 	challenge, ok := uc.chalenges[id]
-	return challenge, ok
+	return challenge.Challenge, ok
 }
 
 type JWTClaims struct {
@@ -162,6 +196,7 @@ func GenerateChallenge(m int) string {
 
 func Handler(uc *UserChalenges) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// separate this into post and get
 		cookie, _ := r.Cookie("auth-token")
 
 		next := r.URL.Query().Get("next")
@@ -249,13 +284,10 @@ func Handler(uc *UserChalenges) http.HandlerFunc {
 			}
 		}
 
-		id := uuid.New()
-		randomId := id.String()
 
-		randomChallenge := GenerateChallenge(challengeAmountOfChars)
-		uc.Add(randomId, randomChallenge)
+		challenge, randomId := uc.Add()
 		t = templ.NewTemplate("templates/base.tmpl", "templates/auth.tmpl")
 
-		t.Render(w, "", Page{randomChallenge, randomId})
+		t.Render(w, "", Page{challenge, randomId})
 	}
 }
