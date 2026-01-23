@@ -3,14 +3,20 @@ package insert_password
 import (
 	"encoding/base64"
 	"fmt"
-	"log"
-	"log/slog"
 	"net/http"
 	"os"
 	templ "pass_web/internal/api/template"
 	"pass_web/internal/utils"
 	"path/filepath"
 )
+
+func createPasswordFile(path string) (*os.File, error) {
+	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
+		return nil, err
+	}
+
+	return os.Create(path)
+}
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
@@ -32,9 +38,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		prefix := utils.GetStorePrefix()
-		log.Println(password_name)
-		file, err := os.Create(filepath.Join(prefix, password_name))
-		slog.Warn("Creating file", "file", file, "error", err)
+
+		file, err := createPasswordFile(filepath.Join(prefix, password_name))
+
 		if err != nil {
 			http.Error(w, "Failed to create file", http.StatusInternalServerError)
 			return
