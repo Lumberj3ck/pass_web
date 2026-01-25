@@ -1,34 +1,117 @@
+async function deriveKey(password, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await window.crypto.subtle.importKey(
+        'raw',
+        enc.encode(password),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveKey']
+    );
+    return window.crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: 100000,
+            hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        true,
+        ['encrypt', 'decrypt']
+    );
+}
 
-async function decryptPassword(encryptedContent, privateKeyArmored, passphrase) {
+async function encryptData(key, data, privateKeyPassword) {
+    const enc = new TextEncoder();
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+    const dataObj = { "privateKey": data, "privateKeyPassword": privateKeyPassword };
+    const jsonString = JSON.stringify(dataObj);
+
+    const encryptedContent = await window.crypto.subtle.encrypt(
+        {
+            name: 'AES-GCM',
+            iv: iv
+        },
+        key,
+        enc.encode(jsonString)
+    );
+    return {
+        iv: iv,
+        data: new Uint8Array(encryptedContent)
+    };
+}
+
+async function decryptData(key, encryptedData) {
+    const dec = new TextDecoder();
+    const decryptedContent = await window.crypto.subtle.decrypt(
+        {
+            name: 'AES-GCM',
+            iv: encryptedData.iv
+        },
+        key,
+        encryptedData.data
+    );
+    return dec.decode(decryptedContent);
+}
+
+async function savePrivateKey(privateKeyArmored, privateKeyPassword, masterPassword) {
+    if (!privateKeyArmored || !masterPassword) {
+        alert('Please provide both a private key and a master password.');
+        return;
+    }
+    // provide private key password inside of encrypted private key
+
+    const salt = window.crypto.getRandomValues(new Uint8Array(16));
+    const key = await deriveKey(masterPassword, salt);
+    const encryptedPrivateKey = await encryptData(key, privateKeyArmored, privateKeyPassword);
+
+    localStorage.setItem('privateKey', JSON.stringify({
+        salt: Array.from(salt),
+        iv: Array.from(encryptedPrivateKey.iv),
+        data: Array.from(encryptedPrivateKey.data)
+    }));
+    alert('Private key saved successfully.');
+}
+
+function clearPrivateKey() {
+    localStorage.removeItem('privateKey');
+    document.getElementById('privateKey').value = '';
+    alert('Private key cleared.');
+    document.getElementById('showPasswordBtn').disabled = true;
+}
+
+async function decryptPassword(encryptedContent, privateKeyArmored, privateKeyPassword) {
+
     try {
         const privateKey = await openpgp.readPrivateKey({ armoredKey: privateKeyArmored });
-        
+
         const decryptedKey = await openpgp.decryptKey({
             privateKey,
-            passphrase
+            passphrase: privateKeyPassword
         });
 
-        console.log("Reading message");
         const encryptedMessage = await openpgp.readMessage({
             binaryMessage: encryptedContent
         });
 
-        const decrypted = await openpgp.decrypt({
+        const { data: decrypted } = await openpgp.decrypt({
             message: encryptedMessage,
-            decryptionKeys: decryptedKey
+            decryptionKeys: decryptedKey,
         });
 
-        return decrypted.data;
+        return decrypted;
     } catch (error) {
         console.error('Decryption failed:', error);
         throw error;
     }
 }
 
-window.passphrase = "";
-async function handlePasswordDecrypt() {
-    const passwordContent = document.getElementById('password-content');
-    const encryptedContent = passwordContent.querySelector('pre').textContent;
+async function handlePasswordDecrypt(privateKey, privateKeyPassword, masterPassword, encryptedContent) {
+    if (!masterPassword) {
+        alert('Please enter your master password.');
+        return;
+    }
 
     const binaryString = atob(encryptedContent);
     const len = binaryString.length;
@@ -37,62 +120,32 @@ async function handlePasswordDecrypt() {
         uint8Array[i] = binaryString.charCodeAt(i);
     }
 
-    const privateKey = document.getElementById('privateKey').value;
+    var decryptedPrivateKeyArmored = privateKey;
+    if (!privateKey){
+        try{
+            const storedPrivateKeyData = JSON.parse(localStorage.getItem('privateKey'));
+            if (!storedPrivateKeyData) {
+                alert('No private key found. Please save your private key first.');
+                return;
+            }
 
-    // if (window.passphrase?.length == 0){
-    //     let passInput = document.getElementById("passphrase")
-    //     window.passphrase = passInput?.value
-    //     setTimeout(() => {window.passphrase = ""; 
-    //         if (passInput){
-    //             passInput.style.display = "block"
-    //         }
-    //
-    //     }, 1000 * 60 * 15);
-    // }
-
-    // if (!window.passphrase) {
-    //     let passInput = document.getElementById("passphrase")
-    //     window.passphrase = passInput?.value
-    //     setTimeout(() => {window.passphrase = ""; 
-    //         if (passInput){
-    //             passInput.style.display = "block"
-    //         }
-    //
-    //     }, 1000 * 60);
-    // }
-
-    try {
-        let password;
-        let password_hide = false;
-        if (!window.passphrase) {
-            let passInput = document.getElementById("passphrase")
-            password_hide = true
-            password = passInput.value
-        } else {
-            password = window.passphrase
+            const salt = new Uint8Array(storedPrivateKeyData.salt);
+            const key = await deriveKey(masterPassword, salt);
+            let decryptedData = await decryptData(key, {
+                iv: new Uint8Array(storedPrivateKeyData.iv),
+                data: new Uint8Array(storedPrivateKeyData.data)
+            });
+            const obj = JSON.parse(decryptedData);
+            decryptedPrivateKeyArmored = obj.privateKey;
+            privateKeyPassword = obj.privateKeyPassword;
+            console.log(decryptedPrivateKeyArmored);
+        } catch (error) {
+            alert('Failed to decrypt private key: ' + error.message);
+            return;
         }
-        const decryptedContent = await decryptPassword(uint8Array, privateKey, password);
-        passwordContent.querySelector('pre').textContent = decryptedContent;
-        document.getElementById("passphrase").style.display = "none"
-
-        if (password_hide){
-            let passInput = document.getElementById("passphrase")
-            window.passphrase = passInput?.value
-            setTimeout(() => {window.passphrase = ""; 
-                if (passInput){
-                    passInput.style.display = "block"
-                }
-
-            }, 1000 * 60);
-        }
-    } catch (error) {
-        alert('Failed to decrypt password: ' + error.message);
     }
-}
 
-// document.addEventListener('htmx:afterSwap', function(evt) {
-//     if (evt.detail.tarkget.id === 'password-content') {
-//         const passwordMenu = document.getElementById('passwordMenu');
-//         passwordMenu.style.display = 'block';
-//     }
-// }); 
+    const decryptedContent = await decryptPassword(uint8Array, decryptedPrivateKeyArmored, privateKeyPassword);
+    // passwordContent.querySelector('pre').textContent = decryptedContent;
+    return decryptedContent;
+}

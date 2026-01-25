@@ -55,34 +55,83 @@ Show
   {{end}}
   
   {{if .Is_root}}
-  <div id="passwordMenu" class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+  <div id="passwordMenu" 
+      class="bg-white rounded-lg shadow-md border border-gray-200 p-6"
+      x-data="{
+            showPrivateKey: false,
+            privateKey: '',
+            passwordContent: '',
+            privateKeyPassword: '',
+            MasterPassword: '',
+            init() {
+                this.showPrivateKey = !localStorage.getItem('privateKey')
+            },
+            async renderDecryptPassword(privateKey, privateKeyPassword, masterPassword) { 
+                try{
+                    d = await handlePasswordDecrypt(privateKey, privateKeyPassword, masterPassword, this.passwordContent);
+                    if (privateKey){
+                        savePrivateKey(privateKey, privateKeyPassword, masterPassword);
+                    }
+                    $refs.decodedContent.innerText = d;
+                    $refs.encodedContent.innerText = '';
+                } catch (error) {
+                    alert('Failed to decrypt password: ' + error.message);
+                    return;
+                }
+            } 
+        }"
+      >
     <h3 class="text-lg font-semibold text-gray-900 mb-4">Decrypt Password</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div class="gap-4 mb-4">
       <div>
-        <label for="privateKey" class="block text-sm font-medium text-gray-700 mb-1">Private Key</label>
+        <label x-show="privateKey" for="privateKey" class="block text-sm font-medium text-gray-700 mb-1">Private Key</label>
         <textarea 
           id="privateKey" 
+          x-show="showPrivateKey"
+          x-model="privateKey"
           class="p-4 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-sm border-gray-300 rounded-md"
           placeholder="Enter your private key"
-          rows="4"
-          oninput="togglePasswordButtons()"
-          onchange="togglePasswordButtons()"></textarea>
+          rows="4"></textarea>
       </div>
       <div>
-        <label for="passphrase" class="block text-sm font-medium text-gray-700 mb-1">Passphrase</label>
+        <label for="privateKeyPassword" class="block text-sm font-medium text-gray-700 mb-1">PrivateKey Password</label>
         <input 
           type="password" 
-          id="passphrase" 
-          placeholder="Enter your passphrase" 
-          class="p-4 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-sm border-gray-300 rounded-md"
-          oninput="togglePasswordButtons()">
+          id="privateKeyPassword" 
+          x-model="privateKeyPassword"
+          placeholder="Enter your private key password" 
+          class="p-4 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-sm border-gray-300 rounded-md">
+      </div>
+      <div>
+        <label for="masterPassword" class="block text-sm font-medium text-gray-700 mb-1">Master Password</label>
+        <input 
+          type="password" 
+          id="masterPassword" 
+          x-model="MasterPassword"
+          placeholder="Enter your master password" 
+          class="p-4 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-sm border-gray-300 rounded-md">
       </div>
     </div>
+    <!-- <div class="flex gap-2 mb-4"> -->
+    <!--     <button  -->
+    <!--       id="savePrivateKeyBtn"  -->
+    <!--       class="w-full inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"  -->
+    <!--       onclick="savePrivateKey()"> -->
+    <!--       Save Private Key -->
+    <!--     </button> -->
+    <!--     <button  -->
+    <!--       id="clearPrivateKeyBtn"  -->
+    <!--       class="w-full inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"  -->
+    <!--       onclick="clearPrivateKey()"> -->
+    <!--       Clear Private Key -->
+    <!--     </button> -->
+    <!-- </div> -->
     <button 
       id="showPasswordBtn" 
       class="w-full inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed mb-4" 
-      onclick="handlePasswordDecrypt()" 
-      disabled>
+      @click="renderDecryptPassword(privateKey, privateKeyPassword, MasterPassword)"
+      :disabled="!privateKey || !privateKeyPassword || !MasterPassword"
+    >
       <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -92,22 +141,6 @@ Show
     <div id="password-content"></div>
   </div>
   
-  <script>
-    if (window.passphrase && window.passphrase.length > 0){
-      let passInput = document.getElementById("passphrase")
-      if (passInput){
-        passInput.style.display = "none"
-      }
-    }
-    
-    function togglePasswordButtons() {
-      const privateKey = document.getElementById('privateKey').value;
-      const passphrase = document.getElementById('passphrase').value;
-      const showPasswordBtn = document.getElementById('showPasswordBtn');
-      showPasswordBtn.disabled = !privateKey || (!passphrase && !window.passphrase);
-    }
-  </script>
-
 <dialog id="search-dialog" class="fixed z-50 inset-0">
   <div class="fixed inset-0 bg-black/50" onclick="closeSearch()"></div>
   <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] max-w-[90vw] bg-white rounded-xl shadow-2xl overflow-hidden">
@@ -145,6 +178,7 @@ Show
   </div>
 </dialog>
 
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
 function openSearch() {
   const dialog = document.getElementById('search-dialog');
@@ -187,9 +221,6 @@ document.getElementById('search-dialog').addEventListener('htmx:trigger', functi
 
 {{ end }}
 </div>
-
-
-
 
 {{ end }}
 

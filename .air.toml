@@ -5,9 +5,9 @@ tmp_dir = "tmp"
 cmd = "go build -buildvcs=false -o ./tmp/main"
 full_bin = "APP_ENV=development ./tmp/main"
 log = "air_errors.log"
-include_dir = []
+include_dir = ["static", "templates"]
 exclude_dir = ["tmp"]
-include_ext = ["go", "tpl", "tmpl", "html"]
+include_ext = ["go", "js", "tpl", "tmpl", "html"]
 exclude_ext = ["log"]
 kill_delay = "0s"
 stop_on_error = true
