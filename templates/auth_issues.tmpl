@@ -1,6 +1,6 @@
 {{ block "auth_provided_cookie_invalid" .}}
-<div>
+<div class="p-4 bg-warning/10 dark:bg-warning/20 border border-warning rounded-lg text-on-surface-strong dark:text-on-surface-dark-strong">
     Couldn't authenticate you, please login
-    <a href="/auth">Login</a>
+    <a href="/auth" class="text-primary dark:text-primary-dark underline hover:opacity-80">Login</a>
 </div>
 {{end}}
