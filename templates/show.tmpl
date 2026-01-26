@@ -37,7 +37,7 @@ Show
     <!-- Password List (scrollable) -->
     <div class="flex-1 min-w-0">
       {{if .Passwords}}
-      <div class="space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] pr-2">
+      <div class="space-y-3  {{ if .Is_root }} overflow-y-auto {{ end }} max-h-[calc(100vh-200px)] pr-2">
         {{ range .Passwords }}
          {{ template "password-item" . }}
         {{ end }}
