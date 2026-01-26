@@ -57,10 +57,8 @@ async function decryptData(key, encryptedData) {
 
 async function savePrivateKey(privateKeyArmored, privateKeyPassword, masterPassword) {
     if (!privateKeyArmored || !masterPassword) {
-        alert('Please provide both a private key and a master password.');
-        return;
+        throw Error('Please provide both a private key and a master password.');
     }
-    // provide private key password inside of encrypted private key
 
     const salt = window.crypto.getRandomValues(new Uint8Array(16));
     const key = await deriveKey(masterPassword, salt);
@@ -109,8 +107,7 @@ async function decryptPassword(encryptedContent, privateKeyArmored, privateKeyPa
 
 async function handlePasswordDecrypt(privateKey, privateKeyPassword, masterPassword, encryptedContent) {
     if (!masterPassword) {
-        alert('Please enter your master password.');
-        return;
+        throw Error('Please enter your master password.');
     }
 
     const binaryString = atob(encryptedContent);
@@ -125,8 +122,7 @@ async function handlePasswordDecrypt(privateKey, privateKeyPassword, masterPassw
         try{
             const storedPrivateKeyData = JSON.parse(localStorage.getItem('privateKey'));
             if (!storedPrivateKeyData) {
-                alert('No private key found. Please save your private key first.');
-                return;
+                throw Error('No private key found. Please save your private key first.');
             }
 
             const salt = new Uint8Array(storedPrivateKeyData.salt);
@@ -140,12 +136,10 @@ async function handlePasswordDecrypt(privateKey, privateKeyPassword, masterPassw
             privateKeyPassword = obj.privateKeyPassword;
             console.log(decryptedPrivateKeyArmored);
         } catch (error) {
-            alert('Failed to decrypt private key: ' + error.message);
-            return;
+            throw error;
         }
     }
 
     const decryptedContent = await decryptPassword(uint8Array, decryptedPrivateKeyArmored, privateKeyPassword);
-    // passwordContent.querySelector('pre').textContent = decryptedContent;
     return decryptedContent;
 }

@@ -72,6 +72,8 @@ Show
                     if (privateKey){
                         savePrivateKey(privateKey, privateKeyPassword, masterPassword);
                     }
+                    this.showPrivateKey = false;
+                    this.privateKey = '';
                     $refs.decodedContent.innerText = d;
                     $refs.encodedContent.innerText = '';
                 } catch (error) {
@@ -83,17 +85,16 @@ Show
       >
     <h3 class="text-lg font-semibold text-gray-900 mb-4">Decrypt Password</h3>
     <div class="gap-4 mb-4">
-      <div>
-        <label x-show="privateKey" for="privateKey" class="block text-sm font-medium text-gray-700 mb-1">Private Key</label>
+      <div x-show="showPrivateKey">
+        <label for="privateKey" class="block text-sm font-medium text-gray-700 mb-1">Private Key</label>
         <textarea 
           id="privateKey" 
-          x-show="showPrivateKey"
           x-model="privateKey"
           class="p-4 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-sm border-gray-300 rounded-md"
           placeholder="Enter your private key"
           rows="4"></textarea>
       </div>
-      <div>
+      <div x-show="showPrivateKey">
         <label for="privateKeyPassword" class="block text-sm font-medium text-gray-700 mb-1">PrivateKey Password</label>
         <input 
           type="password" 
@@ -112,25 +113,10 @@ Show
           class="p-4 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-sm border-gray-300 rounded-md">
       </div>
     </div>
-    <!-- <div class="flex gap-2 mb-4"> -->
-    <!--     <button  -->
-    <!--       id="savePrivateKeyBtn"  -->
-    <!--       class="w-full inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"  -->
-    <!--       onclick="savePrivateKey()"> -->
-    <!--       Save Private Key -->
-    <!--     </button> -->
-    <!--     <button  -->
-    <!--       id="clearPrivateKeyBtn"  -->
-    <!--       class="w-full inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"  -->
-    <!--       onclick="clearPrivateKey()"> -->
-    <!--       Clear Private Key -->
-    <!--     </button> -->
-    <!-- </div> -->
     <button 
       id="showPasswordBtn" 
       class="w-full inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed mb-4" 
       @click="renderDecryptPassword(privateKey, privateKeyPassword, MasterPassword)"
-      :disabled="!privateKey || !privateKeyPassword || !MasterPassword"
     >
       <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
