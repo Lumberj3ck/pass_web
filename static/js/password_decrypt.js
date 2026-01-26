@@ -69,7 +69,6 @@ async function savePrivateKey(privateKeyArmored, privateKeyPassword, masterPassw
         iv: Array.from(encryptedPrivateKey.iv),
         data: Array.from(encryptedPrivateKey.data)
     }));
-    alert('Private key saved successfully.');
 }
 
 function clearPrivateKey() {

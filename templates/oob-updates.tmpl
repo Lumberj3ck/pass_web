@@ -56,3 +56,91 @@ Provided signature is not valid
 <span class="text-green-600">Password inserted successfully!</span>
 </div>
 {{end}}
+
+
+
+
+{{ block "oob-some" .}}
+<div 
+    x-data="{
+        isVisible: false,
+        timeout: null,
+        notification: {
+            title: 'Notification Title',
+            message: 'This is your notification message.',
+            displayDuration: 5000
+        },
+        init() {
+            // Automatically show on load
+            this.$nextTick(() => {
+                this.isVisible = true;
+                this.startAutoDismiss();
+            });
+        },
+        hide() {
+            this.isVisible = false;
+            this.clearAutoDismiss();
+        },
+        startAutoDismiss() {
+            this.clearAutoDismiss();
+            this.timeout = setTimeout(() => {
+                this.hide();
+            }, this.notification.displayDuration);
+        },
+        clearAutoDismiss() {
+            if (this.timeout) {
+                clearTimeout(this.timeout);
+                this.timeout = null;
+            }
+        }
+    }" 
+    x-cloak 
+    x-show="isVisible"
+    class="pointer-events-auto relative rounded-radius border border-success bg-surface text-on-surface dark:bg-surface-dark dark:text-on-surface-dark"
+    role="alert"
+    x-on:mouseenter="clearAutoDismiss()"
+    x-on:mouseleave="startAutoDismiss()"
+    x-transition:enter="transition duration-300 ease-out"
+    x-transition:enter-end="translate-y-0"
+    x-transition:enter-start="translate-y-8"
+    x-transition:leave="transition duration-300 ease-in"
+    x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
+    x-transition:leave-start="translate-x-0 opacity-100">
+    
+    <div class="flex w-full items-center gap-2.5 bg-success/10 rounded-radius p-4 transition-all duration-300">
+        <!-- Title & Message -->
+        <div class="flex flex-col gap-2">
+            <h3 
+                x-cloak 
+                x-show="notification.title" 
+                class="text-sm font-semibold text-success" 
+                x-text="notification.title">
+            </h3>
+            <p 
+                x-cloak 
+                x-show="notification.message" 
+                class="text-pretty text-sm" 
+                x-text="notification.message">
+            </p>
+        </div>
+        
+        <!-- Dismiss Button -->
+        <button 
+            type="button" 
+            class="ml-auto" 
+            aria-label="dismiss notification" 
+            x-on:click="hide()">
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor" 
+                fill="none" 
+                stroke-width="2" 
+                class="size-5 shrink-0" 
+                aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+</div>
+{{end}}
