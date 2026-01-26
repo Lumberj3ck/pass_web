@@ -50,7 +50,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 		t.Render(w, "password-insert-success", struct{}{})
 	} else {
-		t := templ.NewTemplate("templates/base.tmpl", "templates/insert_password.tmpl")
+		t := templ.NewTemplate("templates/base.tmpl", "templates/insert_password.tmpl", "templates/notifications.tmpl")
 		t.Render(w, "", nil)
 	}
 }

@@ -14,9 +14,7 @@ Auth
         </div>
     </div>
 
-    <div id="result" class="mb-6 group pointer-events-none fixed top-1/10 z-99 flex max-w-full flex-col gap-2  md:bottom-0 md:left-[unset] md:right-0 md:top-[unset] md:max-w-sm inset-x-8 inset-y-0 text-center"></div>
-
-    <form id="signed-form" hx-target="#result" class="space-y-6">
+    <form id="signed-form" class="space-y-6">
         <div class="w-full">
             <label for="auth-private-key" class="block text-sm font-medium text-gray-700 mb-2">
                 Private Key
@@ -93,15 +91,15 @@ document.getElementById("signed-form").addEventListener("submit", async function
         const formData = new FormData(form);
         formData.delete("passphrase")
 
-        htmx.ajax('POST', form.getAttribute("hx-post"), {
-            target: form.getAttribute("hx-target"),
-            swap: form.getAttribute("hx-swap"),
+        htmx.ajax('POST', window.location.href, {
+            target: 'body',
+            swap: 'beforeend',
             values: Object.fromEntries(formData)
         });
 
     } catch (err) {
         console.error("Signing failed:", err);
-        alert("Failed to sign the message. Please check your private key or passphrase.");
+        notify('warning', 'Signing Failed', 'Please check your private key or passphrase.');
     }
 });
 </script>

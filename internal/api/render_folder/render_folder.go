@@ -85,7 +85,7 @@ type Page struct {
 
 func Handler(ps *PasswordIdStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		t := templ.NewTemplate("templates/base.tmpl", "templates/show.tmpl", "templates/password-item.tmpl")
+		t := templ.NewTemplate("templates/base.tmpl", "templates/show.tmpl", "templates/password-item.tmpl", "templates/notifications.tmpl")
 
 		prefix := utils.GetStorePrefix()
 		uri_params := r.URL.Query()

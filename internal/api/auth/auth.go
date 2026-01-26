@@ -203,7 +203,7 @@ func Handler(uc *UserChalenges) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			challenge, randomId := uc.Add()
-			t := templ.NewTemplate("templates/base.tmpl", "templates/auth.tmpl")
+			t := templ.NewTemplate("templates/base.tmpl", "templates/auth.tmpl", "templates/notifications.tmpl")
 			t.Render(w, "", Page{challenge, randomId})
 		} else {
 			cookie, _ := r.Cookie("auth-token")
