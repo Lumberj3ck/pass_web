@@ -193,6 +193,12 @@ func GenerateChallenge(m int) string {
 	return resp
 }
 
+type Notification struct {
+	Title string
+	Message string
+	DisplayDuration int
+}
+
 func Handler(uc *UserChalenges) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
@@ -215,7 +221,7 @@ func Handler(uc *UserChalenges) http.HandlerFunc {
 			if sign != "" && challengeId != "" {
 				original, ok := uc.Get(challengeId)
 				if !ok {
-					t.Render(w, "oob-auth-id-fail", struct{}{})
+					t.Render(w, "oob-warning-notification", Notification{"Warning", "Challenge id either expired or incorect", 200000})
 					return
 				}
 
@@ -229,13 +235,13 @@ func Handler(uc *UserChalenges) http.HandlerFunc {
 				file, err := os.Open(pub_key_path)
 				defer file.Close()
 				if err != nil {
-					t.Render(w, "oob-auth-key-not-found", struct{}{})
+					t.Render(w, "oob-warning-notification", Notification{"Warning", "Public key path not found", 2000})
 					return
 				}
 
 				buffer, err := io.ReadAll(file)
 				if err != nil {
-					t.Render(w, "oob-auth-key-read-fail", struct{}{})
+					t.Render(w, "oob-warning-notification", Notification{"Warning", "Public key could not be read", 2000})
 					return
 				}
 				pubkeyArmored := string(buffer)
@@ -243,7 +249,7 @@ func Handler(uc *UserChalenges) http.HandlerFunc {
 				publicKey, err := crypto.NewKeyFromArmored(pubkeyArmored)
 
 				if err != nil {
-					t.Render(w, "oob-auth-invalid-key", struct{}{})
+					t.Render(w, "oob-warning-notification", Notification{"Warning", " Invalid public key", 2000})
 					return
 				}
 
@@ -252,15 +258,14 @@ func Handler(uc *UserChalenges) http.HandlerFunc {
 				verifyResult, err := verifier.VerifyCleartext([]byte(sign))
 				if err != nil {
 					log.Println(err)
-					t.Render(w, "oob-auth-signature-fail", struct{}{})
+					t.Render(w, "oob-warning-notification", Notification{"Warning", "Provided signature is not valid", 2000})
 					return
 				}
 
 				if sigErr := verifyResult.SignatureError(); sigErr != nil {
 					log.Println("Check sign sig err")
 					log.Println(sigErr.Error())
-					t.Render(w, "oob-auth-signature-fail", struct{}{})
-
+					t.Render(w, "oob-warning-notification", Notification{"Warning", "Provided signature is not valid", 2000})
 					return
 				}
 
@@ -272,7 +277,7 @@ func Handler(uc *UserChalenges) http.HandlerFunc {
 					jwt_auth_token, err := GenerateJWT()
 					if err != nil {
 						slog.Error("Failed to generate JWT token", "error", err)
-						t.Render(w, "oob-auth-failed-jwt", struct{}{})
+						t.Render(w, "oob-warning-notification", Notification{"Warning", "Failed to generate JWT token", 2000})
 						return
 					}
 

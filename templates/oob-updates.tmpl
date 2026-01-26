@@ -1,74 +1,12 @@
-{{ block "oob-auth-success" .}}
-<div id="result" hx-swap-oob="true" class="bg-green-100 border-l-4 border-green-500 p-4 mb-4">
-    <div class="flex items-center">
-        <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-        </div>
-        <div class="ml-3">
-            <p class="text-sm text-green-700">
-                Authentication successful! You are now logged in.
-            </p>
-        </div>
-    </div>
-</div>
-{{end}}
-
-{{ block "oob-auth-id-fail" .}}
-<div id="result" hx-swap-oob="true">
-Challenge id either expired or incorect
-</div>
-{{end}}
-
-{{ block "oob-auth-failed-jwt" .}}
-<div id="result" class="text-red-400" hx-swap-oob="true">
-Failed to generate JWT token
-</div>
-{{end}}
-
-{{ block "oob-auth-invalid-key" .}}
-<div id="result" class="text-red-400" hx-swap-oob="true">
-Invalid public key
-</div>
-{{end}}
-
-{{ block "oob-auth-key-read-fail" .}}
-<div id="result" class="text-red-400" hx-swap-oob="true">
-Public key could not be read
-</div>
-{{end}}
-
-{{ block "oob-auth-key-not-found" .}}
-<div id="result" class="text-red-400" hx-swap-oob="true">
-Public key path not found 
-</div>
-{{end}}
-
-{{ block "oob-auth-signature-fail" .}}
-<div id="result" class="text-red-400" hx-swap-oob="true">
-Provided signature is not valid 
-</div>
-{{end}}
-
-{{ block "password-insert-success" .}}
-<div id="insertion-result" hx-swap-oob="true">
-<span class="text-green-600">Password inserted successfully!</span>
-</div>
-{{end}}
-
-
-
-
-{{ block "oob-some" .}}
+{{ block "oob-success-notification" .}}
 <div 
     x-data="{
         isVisible: false,
         timeout: null,
         notification: {
-            title: 'Notification Title',
-            message: 'This is your notification message.',
-            displayDuration: 5000
+            title: '{{ .Title }}',
+            message: '{{ .Message }}',
+            displayDuration: {{ .DisplayDuration }}
         },
         init() {
             // Automatically show on load
@@ -114,6 +52,92 @@ Provided signature is not valid
                 x-cloak 
                 x-show="notification.title" 
                 class="text-sm font-semibold text-success" 
+                x-text="notification.title">
+            </h3>
+            <p 
+                x-cloak 
+                x-show="notification.message" 
+                class="text-pretty text-sm" 
+                x-text="notification.message">
+            </p>
+        </div>
+        
+        <!-- Dismiss Button -->
+        <button 
+            type="button" 
+            class="ml-auto" 
+            aria-label="dismiss notification" 
+            x-on:click="hide()">
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor" 
+                fill="none" 
+                stroke-width="2" 
+                class="size-5 shrink-0" 
+                aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+</div>
+{{end}}
+
+{{ block "oob-warning-notification" .}}
+<div 
+    x-data="{
+        isVisible: false,
+        timeout: null,
+        notification: {
+            title: '{{ .Title }}',
+            message: '{{ .Message }}',
+            displayDuration: {{ .DisplayDuration }}
+        },
+        init() {
+            // Automatically show on load
+            this.$nextTick(() => {
+                this.isVisible = true;
+                this.startAutoDismiss();
+            });
+        },
+        hide() {
+            this.isVisible = false;
+            this.clearAutoDismiss();
+        },
+        startAutoDismiss() {
+            this.clearAutoDismiss();
+            this.timeout = setTimeout(() => {
+                this.hide();
+            }, this.notification.displayDuration);
+        },
+        clearAutoDismiss() {
+            if (this.timeout) {
+                clearTimeout(this.timeout);
+                this.timeout = null;
+            }
+        }
+    }" 
+    x-cloak 
+    x-show="isVisible"
+    class="pointer-events-auto relative rounded-radius border border-warning bg-surface text-on-surface dark:bg-surface-dark dark:text-on-surface-dark   
+    "
+    role="alert"
+    x-on:mouseenter="clearAutoDismiss()"
+    x-on:mouseleave="startAutoDismiss()"
+    x-transition:enter="transition duration-300 ease-out"
+    x-transition:enter-end="translate-y-0"
+    x-transition:enter-start="translate-y-8"
+    x-transition:leave="transition duration-300 ease-in"
+    x-transition:leave-end="-translate-x-24 opacity-0 md:translate-x-24"
+    x-transition:leave-start="translate-x-0 opacity-100">
+    
+    <div class="flex w-full items-center gap-2.5 bg-warning/10 rounded-radius p-4 transition-all duration-300">
+        <!-- Title & Message -->
+        <div class="flex flex-col gap-2">
+            <h3 
+                x-cloak 
+                x-show="notification.title" 
+                class="text-sm font-semibold text-warning" 
                 x-text="notification.title">
             </h3>
             <p 
