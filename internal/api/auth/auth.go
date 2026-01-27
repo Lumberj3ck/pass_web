@@ -36,12 +36,14 @@ type Challenge struct {
 
 type UserChalenges struct {
 	chalenges map[string]Challenge
+	stopChannel chan struct{}
 	mu        sync.RWMutex
 }
 
 func NewUserChalenges() *UserChalenges {
 	uc := &UserChalenges{
 		chalenges: make(map[string]Challenge),
+		stopChannel: make(chan struct{}),
 	}
 
 	go uc.cleanupExpired()
@@ -51,7 +53,8 @@ func NewUserChalenges() *UserChalenges {
 func (uc *UserChalenges) cleanupExpired() {
 	t := time.Tick(time.Minute * 1)
 
-	for range t {
+	select {
+	case <-t:
 		uc.mu.Lock()
 		for k, v := range uc.chalenges {
 			if time.Since(v.Created) >= challengeTimeToLive {
@@ -60,7 +63,14 @@ func (uc *UserChalenges) cleanupExpired() {
 			}
 		}
 		uc.mu.Unlock()
+	case <- uc.stopChannel:
+		return
 	}
+}
+
+func (uc *UserChalenges) ShutDown() {
+	close(uc.stopChannel)
+	slog.Info("Cleaned up resourses")
 }
 
 func (uc *UserChalenges) Add() (string, string) {

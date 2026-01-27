@@ -26,6 +26,8 @@ func main() {
 
 	passwordStore := render_folder.NewPasswordIdStore()
 	userChallenges := auth.NewUserChalenges()
+	defer userChallenges.ShutDown()
+
 	mu := router.NewMutexHandler(passwordStore, userChallenges)
 
 	fs := http.FileServer(http.FS(clientAssets))
